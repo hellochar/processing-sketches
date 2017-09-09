@@ -3,3 +3,4 @@ modes/
 *.mov
 **/application.*/
 **/applet/
+.zip

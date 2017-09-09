@@ -1,0 +1,28 @@
+# Blender MTL File: 'MediumPolyTree.blend'
+# Material Count: 2
+newmtl Bark_Bark_Tile.jpg
+Ns 96.078431
+Ka 0.000000 0.000000 0.000000
+Kd 0.640000 0.640000 0.640000
+Ks 0.000000 0.000000 0.000000
+Ni 1.000000
+d 1.000000
+illum 1
+map_Kd Bark_Tile.jpg
+map_Bump Bark_normal.png
+
+
+newmtl Leaf_LeafCol.jpg
+Ns 96.078431
+Ka 0.000000 0.000000 0.000000
+Kd 0.640000 0.640000 0.640000
+Ks 0.586957 0.586957 0.586957
+Ni 1.000000
+d 0.000000
+illum 2
+map_Kd LeafCol.jpg
+map_d LeafAlpha.jpg
+map_Bump LeafnormalX_normals.PNG
+map_Ks LeafCol.jpg
+
+

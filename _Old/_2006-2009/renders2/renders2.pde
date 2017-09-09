@@ -1,0 +1,13 @@
+size(64, 64);
+PGraphics g = createGraphics(width, height, JAVA2D, "zealot.png");
+g.beginDraw();
+g.background(color(255, 0));
+g.smooth();
+g.strokeWeight(5);
+g.stroke(255,0 ,0, 128);
+g.fill(200);
+g.triangle(64, 32, 0, 0, 0, 64);
+//g.ellipse(32, 32, 64-5, 64-5);
+g.endDraw();
+image(g, 0, 0);
+g.save("zealot.png");

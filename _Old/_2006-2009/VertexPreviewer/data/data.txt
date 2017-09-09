@@ -1,0 +1,24 @@
+
+    roundImg.vertex(7, 8);
+    roundImg.vertex(6, 6);
+    roundImg.vertex(6, 5);
+    roundImg.vertex(7, 5);
+    roundImg.vertex(7, 6);
+    roundImg.vertex(7, 3);
+    roundImg.vertex(8, 3);
+    roundImg.vertex(8, 6);
+    roundImg.vertex(8, 2);
+    roundImg.vertex(9, 2);
+    roundImg.vertex(9, 6);
+    roundImg.vertex(9, 2);
+    roundImg.vertex(10, 2);
+    roundImg.vertex(10, 6);
+    roundImg.vertex(10, 3);
+    roundImg.vertex(11, 3);
+    roundImg.vertex(11, 6);
+    roundImg.vertex(11, 9);
+    roundImg.vertex(10, 11);
+    roundImg.vertex(10, 14);
+    roundImg.vertex(8, 14);
+    roundImg.vertex(8, 10);
+    roundImg.vertex(7, 8);
