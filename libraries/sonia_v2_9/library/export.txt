@@ -1,0 +1,5 @@
+# only export the jar file for applets.. 
+# everything else is installed as a separate browser plugin
+applet=sonia_v2_9.jar
+# application needs everything
+application=sonia_v2_9.jar,JSynClasses.jar,JSynV142.dll,libJSynV142.jnilib
