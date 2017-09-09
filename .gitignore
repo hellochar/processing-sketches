@@ -1,6 +1,35 @@
+# Don't add libraries/ since it bloats the repo
 libraries/
+
+# Don't add modes/ ; we shouldn't touch it and Processing should manage it
 modes/
+
+# don't add movies since they're big
+
 *.mov
+*.mov*
+
+# don't add compiled packages; they bundle the whole jre and bloat the repo
 **/application.*/
+
+# don't add applets, they can't be run anymore anyways
 **/applet/
-.zip
+
+# don't add .package files
+*.7z
+*.dmg
+*.gz
+*.iso
+*.jar
+*.rar
+*.tar
+*.zip
+
+# OS generated files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
