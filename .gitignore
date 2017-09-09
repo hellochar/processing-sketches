@@ -1,2 +1,5 @@
 libraries/
 modes/
+*.mov
+**/application.*/
+**/applet/
