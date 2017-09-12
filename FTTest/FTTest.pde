@@ -6,7 +6,7 @@ float wave(float millis, float freq) {
 
 public final static float SAMPLE_RATE = 44100, //44100 samples a second.
                           MS_PER_SAMP = 1000 / SAMPLE_RATE;
-float MY_FREQ = 440;`
+float MY_FREQ = 440;
 //44.1 samples per ms
 //1/44.1 ms per sample.
 public final static int SAMPLE_SIZE = 2048;
