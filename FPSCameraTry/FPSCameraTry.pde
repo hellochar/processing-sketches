@@ -78,7 +78,7 @@ void draw() {
   textCoord(size, size);
   textCoord(-size, size);
   textCoord(size, -size);
-  Methods.drawAxes(g, 100);f
+  Methods.drawAxes(g, 100);
 }
 
 void textCoord(int x, int y) {
