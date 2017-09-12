@@ -30,31 +30,36 @@ int getColor() {
   return color((frameCount/2)%255, 255, 255);
 }
 
-int offset = 30;
+int offset = 5;
 
 void draw() {
-  for(int i = 0; i < 10; i++)
+  for(int i = 0; i < 100; i++)
     step();
   println(frameRate);
 }
 
 boolean attempt() {
   int s, t, lastS, lastT;
-  lastS = s = x + (int)random(-offset, offset+1);
-  lastT = t = y + (int)random(-offset, offset+1);
+  lastS = s = x + randInt(-offset, offset);
+  lastT = t = y + randInt(-offset, offset);
   do {
     lastS = s;
     lastT = t;
-    s += (int)random(-2, 2);
-    t += (int)random(-2, 2);
+    s += randInt(-1, 1);
+    t += randInt(-1, 1);
     if(!inBounds(s, t)) return false;
 //    println(t+", "+s);
   }while(hasDot(s, t));
-  putDot(lastS, lastT);
+  putDot(s, t);
   fill(getColor());
-  ellipse(map(lastS, 0, boundsX, 0, width), map(lastT, 0, boundsY, 0, height), width/boundsX, height/boundsY);
+  ellipse(map(s, 0, boundsX, 0, width), map(t, 0, boundsY, 0, height), width/boundsX, height/boundsY);
   x = lastS; y = lastT;
   return true;
+}
+
+// returns random int in [neg, pos]
+int randInt(int neg, int pos) {
+  return floor(random(neg, pos+1));
 }
 
 void step() {
