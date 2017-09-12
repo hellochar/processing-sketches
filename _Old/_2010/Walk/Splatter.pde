@@ -9,7 +9,7 @@ class Splatter {
     float r = random(20, 30);
     PVector loc = PVector.add(t.loc, new PVector(random(r), random(r)));
     for(int k = 0; k < points; k++) {
-      this.points[k] = PVector.add(loc, PVector.random(.5*radius).add(PVector.polar(k*dang, radius)));
+      this.points[k] = PVector.add(loc, PVector.add(randomVec(.5*radius),Methods.fromPolar(k*dang, radius)));
     }
   }
   
@@ -18,9 +18,15 @@ class Splatter {
     beginShape();
     for(int a = 0; a < points.length; a++) {
       PVector l = points[a];
-      if(camera.isOnScreen(l))
+      if(camera.isVisible(l))
         curveVertex(l.x, l.y);
     }
     endShape();
   }
 }
+
+PVector randomVec(float mag) {
+  float angle = random(TWO_PI);
+  return Methods.fromPolar(mag, angle);
+}
+

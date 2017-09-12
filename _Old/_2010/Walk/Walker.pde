@@ -21,7 +21,7 @@ class Walker extends ArrayList {
       strokeWeight(t.size);
       stroke(color(t.r, t.g, t.b, 200));
       Trail next = (Trail)get(a+1);
-      if(camera.isOnScreen(t.loc) || camera.isOnScreen(next.loc))
+      if(camera.isVisible(t.loc) || camera.isVisible(next.loc))
         line(t.loc.x, t.loc.y, next.loc.x, next.loc.y);
     }
   }

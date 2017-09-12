@@ -12,6 +12,7 @@ void setup() {
   splatters = new ArrayList();
   camera = new Camera(this);
   camera.registerScrollWheel(1.05);
+  camera.ms(15);
 }
 
 void exit() {
@@ -48,9 +49,9 @@ void draw() {
   //  for(int a = 0; a < walkers.size(); a++) {
   //    Walker w = (Walker)walkers.get(a);
   if(follow)
-    camera.setCameraMiddle(w.last().loc);
+    camera.setCenter(w.last().loc);
   else {
-    camera.scroll(15);
+    camera.uiHandle();
   }
   camera.apply();
   if(!paused)
