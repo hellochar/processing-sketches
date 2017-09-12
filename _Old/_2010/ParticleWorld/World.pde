@@ -1,5 +1,3 @@
-import processing.core.*;
-
 class World {
   Set<Particle> set;
   PApplet pap;

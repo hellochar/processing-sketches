@@ -1,6 +1,3 @@
-import processing.core.PVector;
-import java.util.*;
-
 class Particle {
   private PVector loc, vel, acc;
   private Particle next;
@@ -35,20 +32,20 @@ class Particle {
   
   public void draw() {
     noStroke();
-    fill(color(vel.length() * 10, 255, 255));
+    fill(color(vel.mag() * 10, 255, 255));
     ellipse(loc.x, loc.y, 4, 4);
   }
   
   public PVector getLoc() {
-    return new PVector(loc);
+    return new PVector(loc.x, loc.y, loc.z);
   }
   
   public PVector getVel() {
-    return new PVector(vel);
+    return new PVector(vel.x, vel.y, vel.z);
   }
   
   public PVector getAcc() {
-    return new PVector(acc);
+    return new PVector(acc.x, acc.y, acc.z);
   }
   
   public void setLoc(PVector loc) {
