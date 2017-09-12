@@ -40,7 +40,7 @@ int[] lastIterationOccupied;
 final int NUM_ITERATIONS = 5;
  
 public void setup() {
-  size(displayWidth, displayHeight, P2D);
+  size(1280, 800, P2D);
   lastIterationOccupied = new int[width*height]; 
   for (int i = 0; i < DOT_NUM; i++) {
     dots.add(new Dot());
