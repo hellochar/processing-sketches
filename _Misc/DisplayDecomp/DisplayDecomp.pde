@@ -5,7 +5,7 @@ Camera cam;
 
 void setup() {
   size(1200, 700, P2D);
-  aggregate = readFromCsv("..\\MovieTest\\test1.csv");
+  aggregate = readFromCsv(".\\data\\test1.csv");
   cam = new Camera(this);
 }
 
