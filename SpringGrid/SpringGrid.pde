@@ -27,7 +27,7 @@ void setup() {
   size(600, 600, P3D);
   grid = new Grid(150, 150, method1, midpoint);
   dm = twoD = new FlatColorMap();
-  threeD = new PlanarMap();
+  // threeD = new PlanarMap();
   e = new Emitter(grid.w/2, grid.h/2);
   e.amp = 200;
   grid.addEmitter(e);
