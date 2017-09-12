@@ -1,4 +1,5 @@
 import zhang.*;
+import zhang.grid.*;
 
 import JMyron.*;
 
@@ -14,7 +15,7 @@ void setup(){
   
   my.findGlobs(0);//disable the intelligence to speed up frame rate
   
-  g = new UniformGrid(width, height);
+  g = new BinnedGrid(width, height);
   for(int i = 0; i < 200; i++) {
     g.pollAdd(new Particle(random(width), random(height)));
   }
