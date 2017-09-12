@@ -70,7 +70,7 @@ void drawTentacle() {
 //    rotateX(slope.x);
 //    rotateZ(slope.z);
     
-    float radius = radius(DIST`);
+    float radius = radius(DIST);
     ellipse(0, 0, radius, radius);
     popMatrix();
   }
