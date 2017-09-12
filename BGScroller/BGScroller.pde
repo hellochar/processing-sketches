@@ -2,12 +2,12 @@ import java.awt.*;
 import java.awt.geom.*;
 import zhang.Camera;
 
-class BGScroller {
+class Scroller {
   PImage img;
   float scrollScale;
   boolean wrap;
   
-  public BGScroller(PImage i, float s, boolean w) {
+  public Scroller(PImage i, float s, boolean w) {
     img = i;
     scrollScale = s;
     wrap = w;
@@ -45,7 +45,7 @@ class BGScroller {
   }
 }
 
-BGScroller bgs;
+Scroller bgs;
 Camera cam;
 
 void setup() {
@@ -57,7 +57,7 @@ void setup() {
   test.ellipse(25, 25, 50, 60); fill(251, 196, 210);
   test.triangle(0, 0, 100, 100, 210, 64);
   test.endDraw();
-  bgs = new BGScroller(test, .025f, true);
+  bgs = new Scroller(test, .025f, true);
   cam = new Camera(this);
 }
 
