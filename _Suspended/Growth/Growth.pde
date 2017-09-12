@@ -13,7 +13,7 @@ void setup() {
   toRemove = new HashSet();
   colorMode(HSB);
   cam = new Camera(this);
-  for(int i = 0; i < 1; i++) {
+  for(int i = 0; i < 5; i++) {
     plants.add(new Plant(random(width), random(height), 1));
 //    if(random(1) < .5)
 //      plants.add(new Plant(random(width), round(random(1))*height, 1));
