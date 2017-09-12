@@ -19,8 +19,8 @@ void setup() {
   m = new Minim(this);
   out = m.getLineOut();
   ps = new ParticleSystem(0, 0);
-  w = new World();
-  for(int a = 0; 3; a++) {
+  w = new World(this);
+  for(int a = 0; a < 3; a++) {
     w.add(new Shaper((int)random(1, 5), random(width), random(height)));
   }
   c = new Camera(this, 10, 0, 0);
