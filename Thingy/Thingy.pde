@@ -10,10 +10,10 @@ void setup() {
 boolean started = false;
 
 void draw() {
-  if(started) {
+//  if(started) {
     midpoint.run();
-    if(midpoint.atZero()) end();
-  }
+//    if(midpoint.atZero()) end();
+//  }
   
   background(0);
   stroke(255);
@@ -33,12 +33,13 @@ void draw() {
 }
 
 void keyPressed() {
-  midpoint.add(new Segment(25, PI/180));
+  midpoint.add(new Segment(25, 1.2 * PI/180));
 }
 
 void mousePressed() {
-  if(started) end();
-  else begin();
+//  if(started) end();
+//  else begin();
+  begin();
 }
 
 void begin() {
