@@ -19,6 +19,7 @@ void setup() {
   size(640,360);
   render = createGraphics(width, height, P2D);
 //  smooth();
+  reset();
 }
 
 void reset() {
