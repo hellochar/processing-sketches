@@ -4,6 +4,4 @@ processing sketches from the past 10 years
 # install
 
 1. `git clone` repo
-2. Install Processing 1.5.1
-
-That's it! Open pde files with 1.5.1 and make sure the sketches/ folder is pointed to this folder
+2. Install Processing 2.2.1 for sketches in 2.2.1, or Processing 3.3.6 for sketches in 3.3.6
