@@ -5,10 +5,15 @@ libraries/*/*
 # Don't add modes/ ; we shouldn't touch it and Processing should manage it
 modes/
 
+examples/
+
+frames/*.png
+
 # don't add movies since they're big
 
 *.mov
 *.mov*
+*.mp4
 
 # don't add compiled packages; they bundle the whole jre and bloat the repo
 **/application.*/
@@ -33,3 +38,4 @@ modes/
 .Trashes
 ehthumbs.db
 Thumbs.db
+desktop.ini
