@@ -1,10 +1,12 @@
 void plot(int x, int y, float c, float r, float g, float b) {
-    int index = y * width + x;
-    if (index >= 0 && index < countR.length) {
-        countR[index] += r * c;
-        countG[index] += g * c;
-        countB[index] += b * c;
-    }
+  float opacity = c;
+  int index = y * width + x;
+  if (index >= 0 && index < countR.length) {
+    //float sum = 1 + countR[index] + countG[index] + countB[index];
+    countR[index] = countR[index] + r * opacity;
+    countG[index] = countG[index] + g * opacity;
+    countB[index] = countB[index] + b * opacity;
+  }
 }
 
 float fpart(float x) {

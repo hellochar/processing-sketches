@@ -1,12 +1,9 @@
 
-// how much distance to go away from when looking at your neighbor
-float neighborOffset = 1;
-float moveMult = 14;
-
-void walkAndUpdateCounts(float x, float y, float t, float s, color col) {
-  for (int j = 0; j < 10; j++) {
+void walkAndUpdateCounts(float x, float y, float t, float s, float directionalBiasX, float directionalBiasY, color col) {
+  float directionalMag = 1; // random(1);
+  for (int j = 0; j < 20; j++) {
     //float noise = noiseFn(x, y, t, s);
-    float noiseUp = noiseFn(x, y - neighborOffset, t, s); //<>//
+    float noiseUp = noiseFn(x, y - neighborOffset, t, s);
     float noiseLeft = noiseFn(x - neighborOffset, y, t, s);
     float noiseRight = noiseFn(x + neighborOffset, y, t, s);
     float noiseDown = noiseFn(x, y + neighborOffset, t, s);
@@ -14,22 +11,23 @@ void walkAndUpdateCounts(float x, float y, float t, float s, color col) {
     float deltaY = (noiseDown - noiseUp) / (neighborOffset*2);
     float dist2 = (deltaX * deltaX + deltaY * deltaY);
     float dist = sqrt(dist2);
-    //if ((noiseUp+noiseLeft+noiseRight+noiseDown)/4 < 0.5 && dist2 < 0.00001) {
-    //  // we goin nowhere!
-    //  break;
-    //}
-    //println("< [", noiseUp, noiseLeft, noiseRight, noiseDown, "] (", deltaX, deltaY, ") -> (", deltaX / dist, deltaY / dist, ") >");
-
-    float x2 = x + (deltaX / dist) * moveMult;
-    float y2 = y + (deltaY / dist) * moveMult;
     if (dist == 0) {
       break; // absolutely no movement
     }
+
+    float adjustedDx = deltaX / dist + directionalBiasX * directionalMag;
+    float adjustedDy = deltaY / dist + directionalBiasY * directionalMag;
+    //float adjustedDx = directionalBiasX;
+    //float adjustedDy = directionalBiasY;
+    float adjustedMag = dist(0, 0, adjustedDx, adjustedDy);
+
+    float x2 = x + (adjustedDx / adjustedMag) * moveMult;
+    float y2 = y + (adjustedDy / adjustedMag) * moveMult;
     //float x2 = x + deltaX * moveMult;
     //float y2 = y + deltaY * moveMult;
     //float brightnessScalar = dist / 10f;
     float noiseAvg = (noiseUp + noiseDown + noiseLeft + noiseRight) / 4;
-    float brightnessScalar = (noiseAvg * noiseAvg);
+    float brightnessScalar = noiseAvg * noiseAvg;
     float r = red(col) * brightnessScalar;
     float g = green(col) * brightnessScalar;
     float b = blue(col) * brightnessScalar;

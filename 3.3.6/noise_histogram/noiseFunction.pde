@@ -1,15 +1,3 @@
-float tierDist = 300;
-float sharpness = 4; // lower values < 1 are sharper
-float distanceStable = 2;
-
-float radialNoiseFreq = 2;
-float noiseFactorWeight = 0.8;
-float additionalCartesianNoiseWeight = 1.5;
-float cartesianWavelength = 800;
-
-float NOISE_DX = 1000;
-float NOISE_DY = -990;
-float NOISE_SCALAR = 1;
 
 // creates rolling rings radiating outwards from (0, 0) that are noise modulated both by angle and distance
 // x and y are in "noise" space
