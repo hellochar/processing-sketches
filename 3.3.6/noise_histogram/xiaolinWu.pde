@@ -1,11 +1,18 @@
+
 void plot(int x, int y, float c, float r, float g, float b) {
-  float opacity = c;
+  float opacity = c * 0.25;
   int index = y * width + x;
   if (index >= 0 && index < countR.length) {
     //float sum = 1 + countR[index] + countG[index] + countB[index];
-    countR[index] = countR[index] + r * opacity;
-    countG[index] = countG[index] + g * opacity;
-    countB[index] = countB[index] + b * opacity;
+    countR[index] = countR[index] * (1 - opacity) + r * opacity * countAddGamma / (countAddGamma + countR[index]);
+    countG[index] = countG[index] * (1 - opacity) + g * opacity * countAddGamma / (countAddGamma + countG[index]);
+    countB[index] = countB[index] * (1 - opacity) + b * opacity * countAddGamma / (countAddGamma + countB[index]);
+    //countR[index] = countR[index] + r * opacity;
+    //countG[index] = countG[index] + g * opacity;
+    //countB[index] = countB[index] + b * opacity;
+    //countR[index] = countR[index] * (1 - opacity) + r * opacity;
+    //countG[index] = countG[index] * (1 - opacity) + g * opacity;
+    //countB[index] = countB[index] * (1 - opacity) + b * opacity;
   }
 }
 

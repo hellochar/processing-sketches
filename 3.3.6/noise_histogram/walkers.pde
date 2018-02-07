@@ -1,7 +1,6 @@
 
 void walkAndUpdateCounts(float x, float y, float t, float s, float directionalBiasX, float directionalBiasY, color col) {
-  float directionalMag = 1; // random(1);
-  for (int j = 0; j < 20; j++) {
+  for (int j = 0; j < numMoves; j++) {
     //float noise = noiseFn(x, y, t, s);
     float noiseUp = noiseFn(x, y - neighborOffset, t, s);
     float noiseLeft = noiseFn(x - neighborOffset, y, t, s);
@@ -15,27 +14,22 @@ void walkAndUpdateCounts(float x, float y, float t, float s, float directionalBi
       break; // absolutely no movement
     }
 
-    float adjustedDx = deltaX / dist + directionalBiasX * directionalMag;
-    float adjustedDy = deltaY / dist + directionalBiasY * directionalMag;
-    //float adjustedDx = directionalBiasX;
-    //float adjustedDy = directionalBiasY;
+    float adjustedDx = deltaX * 100 + directionalBiasX;
+    float adjustedDy = deltaY * 100 + directionalBiasY;
     float adjustedMag = dist(0, 0, adjustedDx, adjustedDy);
 
-    float x2 = x + (adjustedDx / adjustedMag) * moveMult;
-    float y2 = y + (adjustedDy / adjustedMag) * moveMult;
-    //float x2 = x + deltaX * moveMult;
-    //float y2 = y + deltaY * moveMult;
-    //float brightnessScalar = dist / 10f;
+    float x2 = x + (adjustedDx / adjustedMag) * moveMult + random(-1, 1);
+    float y2 = y + (adjustedDy / adjustedMag) * moveMult + random(-1, 1);
+    //float x2 = x + adjustedDx * moveMult;
+    //float y2 = y + adjustedDy * moveMult;
     float noiseAvg = (noiseUp + noiseDown + noiseLeft + noiseRight) / 4;
-    float brightnessScalar = noiseAvg * noiseAvg;
+    //float brightnessScalar = dist + noiseAvg;
+    float brightnessScalar = pow(noiseAvg, brightnessFalloff);
+    //float brightnessScalar = log(1 + noiseAvg);
+    col = colors[(int)map(atan2(adjustedDy, adjustedDx), -PI, PI, 0, colors.length) % colors.length];
     float r = red(col) * brightnessScalar;
     float g = green(col) * brightnessScalar;
     float b = blue(col) * brightnessScalar;
-    //int pixelX = round(pixelX(x));
-    //int pixelY = round(pixelY(y));
-    //int pixelX2 = round(pixelX(x2));
-    //int pixelY2 = round(pixelY(y2));
-    //lineCountBresenham(pixelX, pixelY, pixelX2, pixelY2, r, g, b);
     lineCountXiaolinWu(pixelX(x), pixelY(y), pixelX(x2), pixelY(y2), r, g, b);
     x = x2;
     y = y2;

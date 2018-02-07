@@ -15,7 +15,7 @@ float noiseFn(float x, float y, float time, float globalScalar) {
     (1 - noiseFactorWeight) +
     noiseFactorWeight * noise(
       131.2 + normX * radialNoiseFreq,
-      -23910.1111 + normY * radialNoiseFreq,
+      -230.1111 + normY * radialNoiseFreq,
       noiseZ + 23.13
     ) +
     additionalCartesianNoiseWeight * noise(
@@ -25,12 +25,14 @@ float noiseFn(float x, float y, float time, float globalScalar) {
     );
   float modifiedDist = globalScalar * distFromCenter * noiseScalar;
   
-  float closestTier = (round(modifiedDist / tierDist)) * tierDist;
+  // computes a triangle wave of wavelength tierDist that's 0 at the ends and tierDist / 2 at the middle
+  //float closestTier = (round(modifiedDist / tierDist)) * tierDist;
+  //float offset = abs(modifiedDist - closestTier);
   
-  //float wantedDist = scalar * closestTier * (0.5 + 1 * noise(131.2 + normX * ns, -23910.1111 + normY * ns, z));
-  float wantedDist = closestTier;
-  
-  float offset = abs(modifiedDist - wantedDist);
-  return (tierDist * sharpness) / (tierDist * sharpness + offset * offset);
+  // instead we want a smooth wave (lets use sin^2) of wavelength tierDist, 0 at the ends and tierDist/2 at the middle
+  float angle = modifiedDist / tierDist * PI;
+  float offset = pow(sin(angle), 2);
+  //return offset;
+  return smoothness / (smoothness + offset * offset * tierDist / 4);
   //return noise(131.2 + x * ns, 22 + y * ns, z);
 }

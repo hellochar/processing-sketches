@@ -9,12 +9,14 @@ void loadRandomColourLoversPalette() {
   XML response = loadXML("http://www.colourlovers.com/api/palettes/top");
   XML[] allPalettes = response.getChildren("palette");
   XML palette = allPalettes[(int)random(allPalettes.length)];
-  colorPaletteName = palette.getChild("title").getContent(); 
+  String colorPaletteNameUnsanitized = palette.getChild("title").getContent();
+  colorPaletteName = colorPaletteNameUnsanitized.replaceAll("[\\\\/:*?\"<>|]", "_");
+
   XML paletteColorsNode = palette.getChild("colors");
   XML[] hexColorNodes = paletteColorsNode.getChildren("hex");
   colors = new color[hexColorNodes.length];
-  for (int i = 0 ; i < hexColorNodes.length; i++) {
-    XML c = hexColorNodes[i];
+  for (int i = 0 ; i < colors.length; i++) {
+    XML c = hexColorNodes[i]; // we usually get 6 colors back which is too many, 3 looks better
     String hex = c.getContent().trim();
     color paletteColor = unhex(hex);
     colors[i] = paletteColor;
