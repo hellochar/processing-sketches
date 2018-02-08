@@ -1,6 +1,6 @@
 # Don't add libraries/ since it bloats the repo
-libraries/*/*
-!libraries/*/library
+*/libraries/*/*
+!*/libraries/*/library
 
 # Don't add modes/ ; we shouldn't touch it and Processing should manage it
 modes/
