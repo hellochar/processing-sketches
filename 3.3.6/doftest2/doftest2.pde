@@ -96,6 +96,10 @@ void dofPoint(float x, float y, float z, color c) {
   //float percievedThickness = lineThickness;
   // lines at the dof are fully opaque, but blurrier lines have more opacity
   //float opacity = 1 / ((1 + blurAmount) * (1 + blurAmount)); // this makes far away things too blurry and close things too opaque
+  // we want constant energy. the energy corresponds to the area of the point
+  // the thickness corresponds to the radius of the dot
+  // opacity is linearly correlated to energy (is this right?)
+  // therefore opacity should be inverse square correlated to thickness
   float opacity;
   if (dofDistance < 1) {
     opacity = 1 / ((1 + blurAmount) * (1 + blurAmount));
