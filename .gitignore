@@ -8,6 +8,7 @@ modes/
 examples/
 
 frames/*.png
+frames/*.jpg
 
 # don't add movies since they're big
 
