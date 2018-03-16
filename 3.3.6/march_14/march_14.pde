@@ -1,6 +1,6 @@
 import java.util.*;
 
-float sinDistScalar;
+float sinDistDenominator;
 float G;
 
 float t = 0;
@@ -26,7 +26,7 @@ class Particle {
       float dist2 = ox*ox + oy*oy;
       // if (dist2 < 5 * 5) return;
       float dist = sqrt(dist2);
-      float distFactor = G * sin(dist / sinDistScalar) / dist2;
+      float distFactor = G * sin(dist2 / sinDistDenominator);
       // float distFactor = min(100, 1 / (dist * dist));
       if (!Float.isNaN(distFactor)) {
         dfx += ox * distFactor;
@@ -75,10 +75,10 @@ class Particle {
     vy *= 0.99;
     float px = x;
     float py = y;
-    //x += vx * dt;
-    //y += vy * dt;
-    x += fx * dt;
-    y += fy * dt;
+    x += vx * dt;
+    y += vy * dt;
+    // x += fx * dt;
+    // y += fy * dt;
     
     // wrapCoordinates();
     boolean wasOutOfBounds = resetOutOfBounds();
@@ -122,10 +122,10 @@ class Particle {
 
 final int PX_PER_BUCKET = 40;
 List<Particle>[][] buckets;
-Particle[] particles = new Particle[500];
+Particle[] particles = new Particle[1000];
 
 void setup() {
-  size(800, 800, P2D);
+  size(960, 540, P2D);
   buckets = new ArrayList[width / PX_PER_BUCKET][height / PX_PER_BUCKET];
   for (int x = 0; x < buckets.length; x++) {
     for (int y = 0; y < buckets[x].length; y++) {
@@ -169,14 +169,14 @@ void draw() {
   strokeCap(SQUARE);
 
   for (int i = 0; i < 5; i++) {
-    float dt = mousePressed? 0.02 : 0.02;
+    float dt = mousePressed ? 0.02 : 0.02;
     // clearBuckets();
     // fillBuckets();
     
     // sinDistScalar = sqrt(100) / 8 * pow(2, map(sin(t / 100), -1, 1, -3, 3));
-    sinDistScalar = pow(2, map(mouseX, 0, width, -5, 5)) / 32 * 1000;
+    sinDistDenominator = pow(2, map(mouseX, 0, width, -5, 5)) / 32 * 100000;
     
-    G = pow(map(mouseY, 0, height, 1, 10), 3);
+    G = pow(map(mouseY, 0, height, 1, 10), 3) * 0.00003;
     
     for (Particle p : particles) {
       p.computeForceSlow();
@@ -193,6 +193,6 @@ void draw() {
     // p.draw();
   }
 
-
   println(frameRate);
+  // saveFrame("two/####.jpg");
 }
