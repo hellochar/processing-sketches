@@ -2,6 +2,7 @@ import peasy.test.*;
 import peasy.org.apache.commons.math.*;
 import peasy.*;
 import peasy.org.apache.commons.math.geometry.*;
+import java.util.*;
 
 PGraphics gg;
 PeasyCam cam;
@@ -20,10 +21,10 @@ float rad_min = 5, rad_max = 15;
 void draw() {
   println(frameRate);
   gg.beginDraw();
-  gg.background(255, 2);
-//  gg.fill(255, 5);
-//  gg.rect(0, 0, width, height);
-//  gg.fill(0);
+//  gg.background(255, 2);
+  gg.fill(255, 5);
+  gg.rect(0, 0, width, height);
+  gg.fill(0);
   List<PVector> list = new ArrayList();
   float goal = map(mouseX, 0, width, 0, 1);
   for(float x = random(rad_min); x < width; x+=rad_min) {
