@@ -25,8 +25,8 @@ class MNode {
     this.col = col;
   }
 
-  Vec2 getLoc() {
-    return new Vec2(getX(), getY());
+  PVector getLoc() {
+    return new PVector(getX(), getY());
   }
 
   private void align() {
@@ -79,7 +79,7 @@ class MNode {
     align();
   }
 
-  void setLoc(Vec2 loc) {
+  void setLoc(PVector loc) {
     setLoc(loc.x, loc.y);
   }
 

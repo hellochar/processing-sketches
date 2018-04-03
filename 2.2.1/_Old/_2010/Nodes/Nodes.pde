@@ -1,3 +1,4 @@
+import java.util.*;
 import zhang.*;
 
 Set nodes;
@@ -32,7 +33,7 @@ void setup() {
   //  size(d.width, d.height);
   size(800, 600);
   c = new Camera(this);
-  c.registerScroll(false, 1.09f);
+//  c.registerScroll(false, 1.09f);
   //        smooth();
   //        println(PFont.list());
   textFont(loadFont("EuphemiaCAS.vlw"));
@@ -130,7 +131,7 @@ void draw() {
     textAlign(LEFT, TOP);
   }
   //        text(String.valueOf(frameRate), 0, 0);
-  c.scroll(10);
+//  c.scroll(10);
   c.apply();
   Iterator i = nodes.iterator();
   while(i.hasNext()) {
