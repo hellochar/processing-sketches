@@ -443,7 +443,7 @@ void draw() {
      *   PI/6 to PI/2 = the fractal edge changes in interesting ways.
      *     generally at PI/6 it's more circular/round, and at PI/2 it's more pointy.
      */
-    leaves[0].SIDE_ANGLE = PI / 3;
+    leaves[0].SIDE_ANGLE = PI / 5;
     //leaves[0].SIDE_ANGLE = map(sin(millis() / 3000f), -1, 1, PI / 6, PI/2);
     //leaves[0].SIDE_ANGLE = map(mouseY, 0, height, PI/6, PI/2);
 
@@ -510,7 +510,12 @@ void draw() {
      */
     leaves[0].SIDE_ANGLE_RANDOM = 0.1;
     //leaves[0].SIDE_ANGLE_RANDOM = map(mouseX, 0, width, 0, PI / 2);
-    // println(leaves[0].SIDE_ANGLE_RANDOM / (PI / 2));
+    
+    /**
+     * You can set this to false and set the sideways angle between PI/6 and PI/12 to get dichotimous veining.
+     * This might work for petals.
+     */
+    leaves[0].growForwardBranch = true;
 
     for (int i = 0; i < 20; i++) {
       leaves[0].expandBoundary();
