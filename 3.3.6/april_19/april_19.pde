@@ -39,7 +39,7 @@ class Leaf {
    * 1 to 1.5 - makes more aristate and cuneate shapes
    * > 1.5 degenerates - vein crisscrossing
    */
-  float EXPAND_SCALAR = random(0.75, 1.25);
+  float EXPAND_SCALAR = random(0.75, 1.25); //0.75; //1
 
   float EXPAND_DIST = TOO_CLOSE_DIST * EXPAND_SCALAR;
   /**
@@ -88,7 +88,19 @@ class Leaf {
    * 3+ bit spacious and e.g. gives room for turn_towards_x_factor
    * 6 is probably max here.
    */
-  int DEPTH_STEPS_BEFORE_BRANCHING = 2; // 1 + (int)random(0, 3); // 2
+  int DEPTH_STEPS_BEFORE_BRANCHING = 1 + (int)random(0, 3); // 2
+
+  /**
+   * branch_depth_mod
+   * the period of small to big branching.
+   * Larger periods tend to create more lobed/palmate boundary shapes.
+   * Use in conjunction with SECONDARY_BRANCH_SCALAR.
+   * 
+   * 1 will create no secondary branches.
+   * 2-10 creates larger crevases.
+   * To get complex boundaries, DEPTH_STEPS_BEFORE_BRANCHING * BRANCH_DEPTH_MOD should be around 10-20.
+   */
+  int SECONDARY_BRANCH_PERIOD = 1 + (int)(random(1) * random(1) * random(1) * 6);
 
   /**
    * turn_towards_x_factor
@@ -98,7 +110,7 @@ class Leaf {
    * careful - high numbers > 0.5 can cause degenerate early vein termination.
    * -1 is an oddity that looks cool but isn't really realistic (veins flowing backwards).
    */
-  float TURN_TOWARDS_X_FACTOR = random(1) * random(1) * 0.2; // 0.2
+  float TURN_TOWARDS_X_FACTOR = random(1) * random(1) * 0.1; // 0.2
 
   /**
    * avoid_neighbor_force
@@ -109,9 +121,9 @@ class Leaf {
    * you can also go negative which creates these inwards clawing veins. It looks cool, but isn't really realistic.
    * avoid neighbor can help prevent early vein termination from e.g. turn_towards_x_factor.
    */
-  float AVOID_NEIGHBOR_FORCE = random(1) * random(1) * 0.1; // 100
+  float AVOID_NEIGHBOR_FORCE = random(1) * random(1) * 0.1; // 1
 
-  float randWiggle = 0.00;
+  float randWiggle = 0.0;
 
   /* base_disincentive
    * 0 to 1, 10, 100, and 1000 all produce interesting changes
@@ -122,7 +134,7 @@ class Leaf {
   /* cost_distance_to_root
    * Failsafe on unbounded growth. Basically leave this around 1e5 to bound the plant at distance ~600.
    */
-  float COST_DISTANCE_TO_ROOT_DIVISOR = 1e3; // 1e5;
+  float COST_DISTANCE_TO_ROOT_DIVISOR = 5e2; // 1e5;
   /*
    * cost_negative_x_growth
    * keeps leaves from unboundedly growing backwards.
@@ -140,6 +152,14 @@ class Leaf {
    * At 100 basically every leaf becomes ovate, and also increases the number of steps taken.
    */
   float GROW_FORWARD_FACTOR = pow(10, random(0, 2)); // 10
+
+  /**
+   * max 1,
+   * below 0.7 it starts degenerating
+   */
+  float SECONDARY_BRANCH_SCALAR = 1 - (random(1) * random(1) * 0.2); //0.85;
+
+  float COST_TO_TURN = 0;
 
   /**
    * You can set this to false and set the sideways angle between PI/6 and PI/12 to get dichotimous veining.
@@ -160,6 +180,8 @@ class Leaf {
     float costToRoot;
     // number of parents away from root
     int depth = 0;
+    // on the path to root, the number of turns you have to make
+    int numTurns = 0;
     boolean isTerminal = false;
 
     Small(PVector pos) {
@@ -170,6 +192,16 @@ class Leaf {
 
     void add(Small s) {
       s.parent = this;
+      s.depth = this.depth + 1;
+      // consider first child the "straight" child
+      boolean isTurn = true;
+      if (this.children.size() == 0) {
+        s.numTurns = this.numTurns;
+        isTurn = false;
+      } else {
+        s.numTurns = this.numTurns + 1;
+        isTurn = true;
+      }
       this.children.add(s);
       PVector sOffset = s.offset();
       float mag = sOffset.mag();
@@ -206,6 +238,27 @@ class Leaf {
       // this makes nice elliptical shapes
       cost += BASE_DISINCENTIVE * s.position.y * s.position.y * 1 / (1 + s.position.x * s.position.x);
 
+      //Small lastBranch = this;
+      //// children.get(0) is usually the forward vein. But we do .get(0) to be adaptable for
+      //// other cases (not-always-growing-forward, or forward vein is blocked)
+      //// keep going backwards until you hit a turn.
+      //// incentivize going straight
+      //int l = 0;
+      //while (lastBranch.parent != null && lastBranch.parent.children.get(0) == lastBranch) {
+      //  lastBranch = lastBranch.parent;
+      //  l++;
+      //}
+      ////println(l, lastBranch.weight, log(1 + lastBranch.weight));
+      //cost -= log( 1 + lastBranch.weight * STRAIGHT_INCENTIVE_FACTOR );
+
+      // disincentivize curving too much
+      //cost += s.numTurns * STRAIGHT_INCENTIVE_FACTOR;
+
+      // disincentivize turns
+      //if (isTurn) {
+      cost += COST_TO_TURN * s.numTurns;
+      //}
+
       // disincentivize growing laterally when you're too close to the base, but with much stronger falloff - position units
       // good parameters
       // cost += 1000 * s.position.y * s.position.y * 1 / (1 + exp(s.position.x * s.position.x / 200));
@@ -222,8 +275,6 @@ class Leaf {
       // cost -=
 
       s.costToRoot = this.costToRoot + cost;
-
-      s.depth = this.depth + 1;
     }
 
     PVector offset() {
@@ -241,25 +292,30 @@ class Leaf {
         reason = ReasonStopped.Crowded;
         return;
       }
-      PVector forward = this.offset().normalize();
+      PVector offset = this.offset();
+      float mag = offset.mag();
+      PVector forward = offset.normalize();
 
       if (growForwardBranch || depth % DEPTH_STEPS_BEFORE_BRANCHING != 0) {
         PVector heading = forward.copy();
         // make offset go towards +x
         heading.x += (1 - heading.x) * TURN_TOWARDS_X_FACTOR;
-        heading.rotate(symmetricRandom(-randWiggle, randWiggle, this.position.y * 100));
-        heading.setMag(EXPAND_DIST);
-        reason = maybeAddBranch(heading, EXPAND_DIST);
+        heading.rotate(symmetricRandom(-randWiggle, randWiggle, 32 + this.position.x * 1242.319 + this.position.y * 1960)).normalize();
+        // keep the same mag when moving forward
+        reason = maybeAddBranch(heading, mag * 1.0);
       }
 
+      float sideScalar = 1.0;
+      int branchDepth = (int)(depth / DEPTH_STEPS_BEFORE_BRANCHING);
+      sideScalar = branchDepth % SECONDARY_BRANCH_PERIOD == 0 ? 1 : SECONDARY_BRANCH_SCALAR;
       float rotAngle = SIDE_ANGLE + symmetricRandom(-SIDE_ANGLE_RANDOM, SIDE_ANGLE_RANDOM, this.position.y);
       if (depth % DEPTH_STEPS_BEFORE_BRANCHING == 0) {
         PVector positiveTurnOffset = forward.copy().rotate(rotAngle);
-        maybeAddBranch(positiveTurnOffset, EXPAND_DIST);
+        maybeAddBranch(positiveTurnOffset, mag * sideScalar);
       }
       if (depth % DEPTH_STEPS_BEFORE_BRANCHING == 0) {
         PVector negativeTurnOffset = forward.copy().rotate(-rotAngle);
-        maybeAddBranch(negativeTurnOffset, EXPAND_DIST);
+        maybeAddBranch(negativeTurnOffset, mag * sideScalar);
       }
     }
 
@@ -375,6 +431,13 @@ class Leaf {
     if (finished) {
       return;
     }
+
+    // reset weights
+    for (Small s : world) {
+      s.weight = -1;
+    }
+    root.computeWeight();
+
     List<Small> newBoundary = new ArrayList();
     for (Small s : boundary) {
       s.branchOut();
@@ -402,6 +465,7 @@ class Leaf {
     for (Small s : world) {
       s.weight = -1;
     }
+    root.computeWeight();
     //Collections.sort(world, new Comparator() {
     //  public int compare(Object obj1, Object obj2) {
     //    Small s1 = (Small)obj1;
@@ -429,17 +493,17 @@ class Leaf {
       //strokeWeight(pow(s.weight, 1f / 3) / 10);
       stroke(0, 128);
       s.draw();
-      fill(0, 64);
+      fill(0, 64);      
       //text(int(100 * (s.costToRoot / MAX_PATH_COST)), s.position.x, s.position.y);
-
       //text(s.weight, s.position.x, s.position.y);
+      //text(s.numTurns, s.position.x, s.position.y);
       textAlign(BOTTOM, RIGHT);
     }
     for (Small s : terminalNodes) {
       if (s.reason == ReasonStopped.Expensive) {
-      strokeWeight(1);
-      stroke(64, 255, 75);
-      s.draw();
+        strokeWeight(1);
+        stroke(64, 255, 75);
+        s.draw();
       }
     }
 
@@ -484,6 +548,7 @@ boolean liveMorph = false;
 
 void setup() {
   size(1920, 1080);
+  noiseSeed(0);
   //initLeafSingle();
   initLeafGrid();
 
@@ -493,7 +558,13 @@ void setup() {
 
 void initLeafSingle() {
   leaves = new Leaf[1];
-  leaves[0] = new Leaf(width/6, height/2, 1);
+  leaves[0] = new Leaf(width/6, height/2, 6);
+  //for (int z = 0; z < 200; z++) {
+  //  leaves[0].expandBoundary();
+  //if (leaves[0].finished) {
+  //println(z);
+  //}
+  //}
 }
 
 void initLeafGrid() {
@@ -506,26 +577,28 @@ void initLeafGrid() {
     Leaf leaf;
     do {
       leaf = new Leaf(
-        map(x - 0.4, 0, gridWidth, 0, width),
+        map(x - 0.4, 0, gridWidth, 0, width), 
         map(y, 0, gridHeight, 0, height), 
         1.75
         );
-  
+
+      //leaf.MAX_PATH_COST = 150;
+      // leaf.AVOID_NEIGHBOR_FORCE = map(y, 0, gridHeight, 0, 0);
+      // leaf.DEPTH_STEPS_BEFORE_BRANCHING = (int)map(x, 0, gridWidth, 1, 5);
+      // leaf.SIDE_ANGLE = map(x, 0, gridWidth, PI / 8, PI / 2);
+      // leaf.SIDEWAYS_COST_RATIO = map(y, 0, gridHeight, 0.0, 0.2);
+      //leaf.BASE_DISINCENTIVE = pow(10, map(x, 0, gridWidth, 0, 5));
+      //leaf.TURN_TOWARDS_X_FACTOR = map(y, 0, gridHeight, 0.01, 1.0);
+      //leaf.STRAIGHT_INCENTIVE_FACTOR = map(x, 0, gridWidth, 0, 10);
+
       for (int z = 0; z < 200; z++) {
         leaf.expandBoundary();
         //if (leaves[0].finished) {
-        //  println(i);
+        //println(z);
         //}
       }
     } while (leaf.isDegenerate());
     println(i);
-    //leaf.MAX_PATH_COST = 150;
-    // leaf.AVOID_NEIGHBOR_FORCE = map(y, 0, gridHeight, 0, 0);
-    // leaf.DEPTH_STEPS_BEFORE_BRANCHING = (int)map(x, 0, gridWidth, 1, 5);
-    // leaf.SIDE_ANGLE = map(x, 0, gridWidth, PI / 8, PI / 2);
-    // leaf.SIDEWAYS_COST_RATIO = map(y, 0, gridHeight, 0.0, 0.2);
-    //leaf.BASE_DISINCENTIVE = pow(10, map(x, 0, gridWidth, 0, 5));
-    //leaf.TURN_TOWARDS_X_FACTOR = map(y, 0, gridHeight, 0.01, 1.0);
     leaves[i] = leaf;
   }
 }
@@ -551,7 +624,17 @@ void draw() {
     translate(-leftX, -topY);
   }
   // translate(0, height / 2);
-  // scale(0.5, 0.5);
+  //scale(0.5, 0.5);
+
+  //leaves[0].expandBoundary();
+  //if (keyPressed && key == ' ') {
+  //  initLeafSingle();
+
+  //  leaves[0].SECONDARY_BRANCH_SCALAR = 0.85;
+  //  leaves[0].SECONDARY_BRANCH_PERIOD = max(1, (int)map(mouseY, 0, height, 1, 10));
+  //  leaves[0].DEPTH_STEPS_BEFORE_BRANCHING = max(1, (int)map(mouseX, 0, width, 1, 6));
+  //}
+
   if (liveMorph && mousePressed && mouseButton == LEFT) {
     initLeafSingle();
     //leaves[0].BASE_DISINCENTIVE = pow(10, map(cos(millis() / 450f), -1, 1, 0, 3));
@@ -568,6 +651,12 @@ void draw() {
 
     //leaves[0].MAX_PATH_COST = pow(10, map(mouseX, 0, width, 0, 3));
 
+    //leaves[0].BRANCH_SCALAR = map(mouseX, 0, width, 0.5, 1.0);
+    leaves[0].SECONDARY_BRANCH_SCALAR = 0.85;
+    leaves[0].SECONDARY_BRANCH_PERIOD = max(1, (int)map(mouseY, 0, height, 1, 10));
+    leaves[0].DEPTH_STEPS_BEFORE_BRANCHING = 3; // max(1, (int)map(mouseX, 0, width, 1, 6));
+    leaves[0].COST_TO_TURN = map(mouseX, 0, width, 0, 100);
+
     for (int i = 0; i < 200 && !leaves[0].finished; i++) {
       leaves[0].expandBoundary();
       if (leaves[0].finished) {
@@ -582,7 +671,11 @@ void draw() {
     //l.expandBoundary();
     l.draw();
   }
-  saveFrame("leaves.png");
-  noLoop();
+  fill(0);
+  textAlign(LEFT, TOP);
+  textSize(20);
+  text(leaves[0].DEPTH_STEPS_BEFORE_BRANCHING + "\n" + leaves[0].SECONDARY_BRANCH_PERIOD, 0, 0);
+  //saveFrame("leaves.png");
+  //noLoop();
   //println(frameRate);
 }
