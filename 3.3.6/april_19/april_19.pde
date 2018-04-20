@@ -29,21 +29,104 @@ class Leaf {
     boundary.add(root);
   }
 
+  // distance between branches. this kind of controls the fine detail of the leaves.s
   float TOO_CLOSE_DIST = 10;
   float EXPAND_DIST = TOO_CLOSE_DIST * 1.01;
-  float MAX_PATH_COST = 400;
-  float SIDEWAYS_COST_RATIO = 0.5;
-  float SIDE_ANGLE = PI / 2 * 0.7; // past PI/2 doesn't make sense
-  float SIDE_ANGLE_RANDOM = PI / 2 * 0.0;
-  int DEPTH_STEPS_BEFORE_BRANCHING = 2;
-  float TURN_TOWARDS_X_FACTOR = 0.0;
-  float AVOID_NEIGHBOR_FORCE = 0;
+  /**
+   * max_path_cost
+   * Linear scalar of how big the plant grows; good numbers are 100 to 1000.
+   */
+  float MAX_PATH_COST = 200;
+  /* sideways_cost_ratio
+   * Powerful number that controls how fat the leaf grows.
+   * -1 = obovate, truncate, obcordate
+   * -0.2 = cuneate, orbicular
+   * 0 = ellipse
+   * 1+ = spear-shaped, linear, subulate
+   */
+  float SIDEWAYS_COST_RATIO = random(0, 0.5); //0.5;
+  
+  /* side_angle
+   * controls the complexity of the edge and angular look of the inner vein system
+   *   <PI / 6 = degenerate "nothing grows" case.
+   *   PI/6 to PI/2 = the fractal edge changes in interesting ways.
+   *     generally at PI/6 it's more circular/round, and at PI/2 it's more pointy.
+   */
+  float SIDE_ANGLE = random(PI/6, PI/2); //PI / 3;
+  /**
+   * side_angle_random
+   * adds a random noise to every side_angle
+   * at 0 the leaf looks perfectly straight/mathematically curvy
+   * and allows for interesting fragile vein patterns to appear
+   * 
+   * as this bumps up the patterns will start to give way to chaos and
+   * a more messy look.
+   * This can open up the way for veins to flow in places they might not
+   * have before.
+   * This also risks non-symmetricness.
+   *
+   * Anything beyond like PI / 4 will be pretty messy. 
+   */
+  float SIDE_ANGLE_RANDOM = 0; // random(0, PI / 4); //PI / 6;
+  
+  /**
+   * turn_depths_before_branching
+   * kind of like a detail slider - how dense do you want the veins to be.
+   * 1 is messier and has "hair" veins
+   * 2 is more uniform
+   * 3+ bit spacious and e.g. gives room for turn_towards_x_factor
+   * 6 is probably max here.
+   */
+  int DEPTH_STEPS_BEFORE_BRANCHING = 2; // 1 + (int)random(0, 3); // 2
+  
+  /**
+   * turn_towards_x_factor
+   * gives veins an upwards curve.
+   * 0 makes veins perfectly straight.
+   * 1 makes veins curve sharply towards x.
+   * careful - high numbers > 0.5 can cause degenerate early vein termination.
+   * -1 is an oddity that looks cool but isn't really realistic (veins flowing backwards).
+   */
+  float TURN_TOWARDS_X_FACTOR = random(0, 0.2); // 0.2
+  
+  /**
+   * avoid_neighbor_force
+   * tends to spread veins out even if they grow backwards
+   * you probably want at least some of this; it gives variety and better texture to the veins
+   * 100 is a decent amount
+   * This may ruin fragile venation patterns though.
+   * you can also go negative which creates these inwards clawing veins. It looks cool, but isn't really realistic.
+   * avoid neighbor can help prevent early vein termination from e.g. turn_towards_x_factor.
+   */
+  float AVOID_NEIGHBOR_FORCE = random(0, 100); // 100
+  
   float randWiggle = 0.00;
-  float BASE_DISINCENTIVE = 100;
+  
+  /* base_disincentive
+   * 0 to 1, 10, 100, and 1000 all produce interesting changes
+   * generally speaking, 0 = cordate, 1000 = linear/lanceolate
+   */
+  float BASE_DISINCENTIVE = pow(10, random(0, 2)); //100
+  
+  /* cost_distance_to_root
+   * Failsafe on unbounded growth. Basically leave this around 1e5 to bound the plant at distance ~600.
+   */
   float COST_DISTANCE_TO_ROOT_DIVISOR = 1e5;
-  float COST_BEHIND_GROWTH = 0;
+  /*
+   * cost_behind_growth
+   * keeps leaves from unboundedly growing backwards.
+   * 1e-3 and below basically has no effect.
+   * from 1e-3 to 1, the back edge of the leaf shrinks to nothing.
+   * You probably want this around 0.2 to 0.5.
+   * Around 0.3 you can get cordate shapes with the right combination of parameters.
+   */
+  float COST_BEHIND_GROWTH = pow(10, random(-2, 0)); // 0.2
+  
+  /**
+   * You can set this to false and set the sideways angle between PI/6 and PI/12 to get dichotimous veining.
+   * This might work for petals.
+   */
   boolean growForwardBranch = true;
-
 
   class Small {
     PVector position;
@@ -86,7 +169,7 @@ class Leaf {
       // incentivize growing forward - offset units
       // disabled - this does make it longer, but that responsibility is more cleanly covered with maxCost
       // cost -= log(1 + (sOffset.x / EXPAND_DIST) * 2); // careful about blowing out the cost here
-      // cost -= max(0, sOffset.x / EXPAND_DIST * INCENTIVE_GROW_FORWARD);
+      cost -= max(0, (sOffset.x - abs(sOffset.y)) / EXPAND_DIST * 1);
 
       // disincentivize getting too wide - position units
       // disabled - this helps control line vs round but that's already controlled with sideways_cost_ratio
@@ -141,25 +224,25 @@ class Leaf {
         reason = ReasonStopped.Crowded;
         return;
       }
-      PVector offset = this.offset();
+      PVector forward = this.offset().normalize();
 
       if (growForwardBranch || depth % DEPTH_STEPS_BEFORE_BRANCHING != 0) {
-        PVector forwardOffset = offset.copy().setMag(EXPAND_DIST);
+        PVector heading = forward.copy();
         // make offset go towards +x
-        forwardOffset.x += (EXPAND_DIST - forwardOffset.x) * TURN_TOWARDS_X_FACTOR;
-        forwardOffset.rotate(symmetricRandom(-randWiggle, randWiggle, this.position.y * 100));
-        forwardOffset.setMag(EXPAND_DIST);
-        reason = maybeAddBranch(forwardOffset);
+        heading.x += (1 - heading.x) * TURN_TOWARDS_X_FACTOR;
+        heading.rotate(symmetricRandom(-randWiggle, randWiggle, this.position.y * 100));
+        heading.setMag(EXPAND_DIST);
+        reason = maybeAddBranch(heading, EXPAND_DIST);
       }
 
       float rotAngle = SIDE_ANGLE + symmetricRandom(-SIDE_ANGLE_RANDOM, SIDE_ANGLE_RANDOM, this.position.y);
       if (depth % DEPTH_STEPS_BEFORE_BRANCHING == 0) {
-        PVector positiveTurnOffset = offset.copy().setMag(EXPAND_DIST).rotate(rotAngle);
-        maybeAddBranch(positiveTurnOffset);
+        PVector positiveTurnOffset = forward.copy().rotate(rotAngle);
+        maybeAddBranch(positiveTurnOffset, EXPAND_DIST);
       }
       if (depth % DEPTH_STEPS_BEFORE_BRANCHING == 0) {
-        PVector negativeTurnOffset = offset.copy().setMag(EXPAND_DIST).rotate(-rotAngle);
-        maybeAddBranch(negativeTurnOffset);
+        PVector negativeTurnOffset = forward.copy().rotate(-rotAngle);
+        maybeAddBranch(negativeTurnOffset, EXPAND_DIST);
       }
     }
 
@@ -187,10 +270,11 @@ class Leaf {
     }
 
     /**
-     * Returns a new offset after the old would-be point has been repelled from everyone except 
+     * Returns a new heading after the old would-be point has been repelled from everyone except 
      * immediate family (siblings or parent)
      */
-    PVector avoidEveryone(PVector offset) {
+    PVector avoidEveryone(PVector heading, float mag) {
+      PVector offset = heading.copy().mult(mag);
       PVector position = this.position.copy().add(offset);
       PVector force = new PVector();
       for (Small s : world) {
@@ -207,20 +291,20 @@ class Leaf {
         }
       }
       // note - this can actually move you into another neighbor... just ignore that for now though
-      PVector newOffset = offset.copy().add(force).setMag(EXPAND_DIST);
-      return newOffset;
+      PVector newHeading = offset.copy().add(force).normalize();
+      return newHeading;
     }
 
-    ReasonStopped maybeAddBranch(PVector offset) {
+    ReasonStopped maybeAddBranch(PVector heading, float mag) {
       if (this.costToRoot > MAX_PATH_COST) {
         return ReasonStopped.Expensive;
       }
       //// make offset go towards +x
       //offset.x += (EXPAND_DIST - offset.x) * TURN_TOWARDS_X_FACTOR;
       // offset.setMag(EXPAND_DIST);
-      PVector avoidedOffset = avoidEveryone(offset);
+      PVector avoidedHeading = avoidEveryone(heading, mag);
       // we've now moved away from everyone.
-      PVector childPosition = this.position.copy().add(avoidedOffset);
+      PVector childPosition = this.position.copy().add(avoidedHeading.setMag(mag));
       boolean isTerminal = false;
       Small nearestNeighbor = nearestCollidableNeighbor(childPosition);
       if (nearestNeighbor != null && nearestNeighbor.position.dist(childPosition) < TOO_CLOSE_DIST) {
@@ -330,7 +414,7 @@ class Leaf {
         s.draw();
       }
     }
-    drawBoundary();
+    // drawBoundary();
   }
 
   void drawBoundary() {
@@ -358,12 +442,12 @@ class Leaf {
 
 Leaf[] leaves;
 
-boolean liveMorph = true;
+boolean liveMorph = false;
 
 void setup() {
-  size(800, 600);
-  initLeafSingle();
-  //initLeafGrid();
+  size(1920, 1080);
+  // initLeafSingle();
+  initLeafGrid();
 }
 
 void initLeafSingle() {
@@ -388,10 +472,19 @@ void initLeafGrid() {
     // leaf.DEPTH_STEPS_BEFORE_BRANCHING = (int)map(x, 0, gridWidth, 1, 5);
     // leaf.SIDE_ANGLE = map(x, 0, gridWidth, PI / 8, PI / 2);
     // leaf.SIDEWAYS_COST_RATIO = map(y, 0, gridHeight, 0.0, 0.2);
-    leaf.BASE_DISINCENTIVE = pow(10, map(x, 0, gridWidth, 0, 5));
-    leaf.TURN_TOWARDS_X_FACTOR = map(y, 0, gridHeight, 0.01, 1.0);
+    //leaf.BASE_DISINCENTIVE = pow(10, map(x, 0, gridWidth, 0, 5));
+    //leaf.TURN_TOWARDS_X_FACTOR = map(y, 0, gridHeight, 0.01, 1.0);
     leaves[i] = leaf;
   }
+  
+    for (int i = 0; i < 20 && !leaves[0].finished; i++) {
+      for (Leaf l : leaves) {
+        l.expandBoundary();
+        //if (leaves[0].finished) {
+        //  println(i);
+        //}
+      }
+    }
 }
 
 void mousePressed() {
@@ -408,117 +501,28 @@ void draw() {
   background(255);
   if (mousePressed && mouseButton == RIGHT) {
     //translate(-mouseX, -mouseY);
-    scale(0.5);
-    translate(width, height/2);
+    scale(2);
+    translate(width/2, height/2);
   }
   // translate(0, height / 2);
   // scale(0.5, 0.5);
   if (liveMorph) {
     initLeafSingle();
-    // parameters:
-
-
-    /* base_disincentive
-     * 0 to 1, 10, 100, and 1000 all produce interesting changes
-     * generally speaking, 0 = cordate, 1000 = linear/lanceolate
-     */
-    leaves[0].BASE_DISINCENTIVE = 0;
     //leaves[0].BASE_DISINCENTIVE = pow(10, map(cos(millis() / 450f), -1, 1, 0, 3));
     //leaves[0].BASE_DISINCENTIVE = pow(10, map(mouseX, 0, width, 0, 3));
 
-    /*
-     * max_path_cost
-     * Linear scalar of how big the plant grows; good numbers are 100 to 1000.
-     */
-    leaves[0].MAX_PATH_COST = 1000;
-
-    /* cost_distance_to_root
-     * Failsafe on unbounded growth. Basically leave this around 1e5 to bound the plant at distance ~600.
-     */
-    leaves[0].COST_DISTANCE_TO_ROOT_DIVISOR = pow(10, 5);
-
-    /* side_angle
-     * controls the complexity of the edge and angular look of the inner vein system
-     *   <PI / 6 = degenerate "nothing grows" case.
-     *   PI/6 to PI/2 = the fractal edge changes in interesting ways.
-     *     generally at PI/6 it's more circular/round, and at PI/2 it's more pointy.
-     */
-    leaves[0].SIDE_ANGLE = PI / 5;
     //leaves[0].SIDE_ANGLE = map(sin(millis() / 3000f), -1, 1, PI / 6, PI/2);
     //leaves[0].SIDE_ANGLE = map(mouseY, 0, height, PI/6, PI/2);
 
-    /* sideways_cost_ratio
-     * Powerful number that controls how fat the leaf grows.
-     * -1 = obovate, truncate, obcordate
-     * -0.2 = cuneate, orbicular
-     * 0 = ellipse
-     * 1+ = spear-shaped, linear, subulate
-     */
-    //leaves[0].SIDEWAYS_COST_RATIO = 0.25;
-    leaves[0].SIDEWAYS_COST_RATIO = 0.25;
     //leaves[0].SIDEWAYS_COST_RATIO = map(mouseX, 0, width, 0, 1);
 
-    /*
-     * cost_behind_growth
-     * keeps leaves from unboundedly growing backwards.
-     * 1e-3 and below basically has no effect.
-     * from 1e-3 to 1, the back edge of the leaf shrinks to nothing.
-     * You probably want this around 0.2 to 0.5.
-     * Around 0.3 you can get cordate shapes with the right combination of parameters.
-     */
-    leaves[0].COST_BEHIND_GROWTH = 0.2; // pow(10, map(mouseX, 0, width, -10, 3));
+    //leaves[0].COST_BEHIND_GROWTH = pow(10, map(mouseX, 0, width, -10, 3));
 
-    /**
-     * turn_towards_x_factor
-     * gives veins an upwards curve.
-     * 0 makes veins perfectly straight.
-     * 1 makes veins curve sharply towards x.
-     * careful - high numbers > 0.5 can cause degenerate early vein termination.
-     * -1 is an oddity that looks cool but isn't really realistic (veins flowing backwards).
-     */
-    leaves[0].TURN_TOWARDS_X_FACTOR = 0.1;
-    
-    /**
-     * avoid_neighbor_force
-     * tends to spread veins out even if they grow backwards
-     * you probably want at least some of this; it gives variety and better texture to the veins
-     * 100 is a decent amount
-     * This may ruin fragile venation patterns though.
-     * you can also go negative which creates these inwards clawing veins. It looks cool, but isn't really realistic.
-     * avoid neighbor can help prevent early vein termination from e.g. turn_towards_x_factor.
-     */
-    leaves[0].AVOID_NEIGHBOR_FORCE = 10;
-    
-    /**
-     * turn_depths_before_branching
-     * kind of like a detail slider - how dense do you want the veins to be.
-     * 1 is messier and has "hair" veins
-     * 2 is more uniform
-     * 3+ bit spacious and e.g. gives room for turn_towards_x_factor
-     * 6 is probably max here.
-     */
-    leaves[0].DEPTH_STEPS_BEFORE_BRANCHING = 1;
-    
-    /**
-     * adds a random noise to every side_angle
-     * at 0 the leaf looks perfectly straight/mathematically curvy
-     * and allows for interesting fragile vein patterns to appear
-     * as this bumps up the patterns will start to give way to chaos and
-     * a more messy look. This can open up the way for veins to flow in places
-     * they might not have before.
-     * anything beyond like PI / 4 will be pretty messy. 
-     */
-    leaves[0].SIDE_ANGLE_RANDOM = 0.1;
-    //leaves[0].SIDE_ANGLE_RANDOM = map(mouseX, 0, width, 0, PI / 2);
-    
-    /**
-     * You can set this to false and set the sideways angle between PI/6 and PI/12 to get dichotimous veining.
-     * This might work for petals.
-     */
-    leaves[0].growForwardBranch = true;
-
-    for (int i = 0; i < 20; i++) {
+    for (int i = 0; i < 100 && !leaves[0].finished; i++) {
       leaves[0].expandBoundary();
+      if (leaves[0].finished) {
+        println(i);
+      }
     }
   }
   for (Leaf l : leaves) {
