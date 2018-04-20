@@ -30,13 +30,24 @@ class Leaf {
   }
 
   // distance between branches. this kind of controls the fine detail of the leaves.s
-  float TOO_CLOSE_DIST = 10;
-  float EXPAND_DIST = TOO_CLOSE_DIST * 1.01;
+  float TOO_CLOSE_DIST = 1;
+  /**
+   * < 0.5 always degenerates - no branching
+   * 0.75 still has some degenerates
+   * 0.75 to 1 - creates nicer complex boundaries
+   * 1 - normal
+   * 1 to 1.5 - makes more aristate and cuneate shapes
+   * > 1.5 degenerates - vein crisscrossing
+   */
+  float EXPAND_SCALAR = random(0.75, 1.25);
+
+  float EXPAND_DIST = TOO_CLOSE_DIST * EXPAND_SCALAR;
   /**
    * max_path_cost
    * Linear scalar of how big the plant grows; good numbers are 100 to 1000.
+   * For high fidelity, pump this up to like 5000
    */
-  float MAX_PATH_COST = 200;
+  float MAX_PATH_COST = 400;
   /* sideways_cost_ratio
    * Powerful number that controls how fat the leaf grows.
    * -1 = obovate, truncate, obcordate
@@ -44,8 +55,8 @@ class Leaf {
    * 0 = ellipse
    * 1+ = spear-shaped, linear, subulate
    */
-  float SIDEWAYS_COST_RATIO = random(0, 0.5); //0.5;
-  
+  float SIDEWAYS_COST_RATIO = random(-1, 1) * random(1) * 0.5; //0.5;
+
   /* side_angle
    * controls the complexity of the edge and angular look of the inner vein system
    *   <PI / 6 = degenerate "nothing grows" case.
@@ -67,8 +78,8 @@ class Leaf {
    *
    * Anything beyond like PI / 4 will be pretty messy. 
    */
-  float SIDE_ANGLE_RANDOM = 0; // random(0, PI / 4); //PI / 6;
-  
+  float SIDE_ANGLE_RANDOM = random(1) * random(1) * PI / 6; // random(0, PI / 4); //PI / 6;
+
   /**
    * turn_depths_before_branching
    * kind of like a detail slider - how dense do you want the veins to be.
@@ -78,7 +89,7 @@ class Leaf {
    * 6 is probably max here.
    */
   int DEPTH_STEPS_BEFORE_BRANCHING = 2; // 1 + (int)random(0, 3); // 2
-  
+
   /**
    * turn_towards_x_factor
    * gives veins an upwards curve.
@@ -87,8 +98,8 @@ class Leaf {
    * careful - high numbers > 0.5 can cause degenerate early vein termination.
    * -1 is an oddity that looks cool but isn't really realistic (veins flowing backwards).
    */
-  float TURN_TOWARDS_X_FACTOR = random(0, 0.2); // 0.2
-  
+  float TURN_TOWARDS_X_FACTOR = random(1) * random(1) * 0.2; // 0.2
+
   /**
    * avoid_neighbor_force
    * tends to spread veins out even if they grow backwards
@@ -98,30 +109,38 @@ class Leaf {
    * you can also go negative which creates these inwards clawing veins. It looks cool, but isn't really realistic.
    * avoid neighbor can help prevent early vein termination from e.g. turn_towards_x_factor.
    */
-  float AVOID_NEIGHBOR_FORCE = random(0, 100); // 100
-  
+  float AVOID_NEIGHBOR_FORCE = random(1) * random(1) * 0.1; // 100
+
   float randWiggle = 0.00;
-  
+
   /* base_disincentive
    * 0 to 1, 10, 100, and 1000 all produce interesting changes
    * generally speaking, 0 = cordate, 1000 = linear/lanceolate
    */
-  float BASE_DISINCENTIVE = pow(10, random(0, 2)); //100
-  
+  float BASE_DISINCENTIVE = pow(10, random(0, 3)); //100
+
   /* cost_distance_to_root
    * Failsafe on unbounded growth. Basically leave this around 1e5 to bound the plant at distance ~600.
    */
-  float COST_DISTANCE_TO_ROOT_DIVISOR = 1e5;
+  float COST_DISTANCE_TO_ROOT_DIVISOR = 1e3; // 1e5;
   /*
-   * cost_behind_growth
+   * cost_negative_x_growth
    * keeps leaves from unboundedly growing backwards.
    * 1e-3 and below basically has no effect.
    * from 1e-3 to 1, the back edge of the leaf shrinks to nothing.
    * You probably want this around 0.2 to 0.5.
    * Around 0.3 you can get cordate shapes with the right combination of parameters.
    */
-  float COST_BEHIND_GROWTH = pow(10, random(-2, 0)); // 0.2
-  
+  float COST_NEGATIVE_X_GROWTH = pow(10, random(-1, 0)); // 0.2
+
+  /**
+   * grow_forward_factor
+   * basically incentivizes... growing forward. Makes leave ovate.
+   * Anything below 10 basically has no effect. 
+   * At 100 basically every leaf becomes ovate, and also increases the number of steps taken.
+   */
+  float GROW_FORWARD_FACTOR = pow(10, random(0, 2)); // 10
+
   /**
    * You can set this to false and set the sideways angle between PI/6 and PI/12 to get dichotimous veining.
    * This might work for petals.
@@ -166,14 +185,12 @@ class Leaf {
       // disincentivize growing too laterally - offset units
       cost += abs(sOffset.y * sOffset.y) * SIDEWAYS_COST_RATIO;
 
-      // incentivize growing forward - offset units
-      // disabled - this does make it longer, but that responsibility is more cleanly covered with maxCost
-      // cost -= log(1 + (sOffset.x / EXPAND_DIST) * 2); // careful about blowing out the cost here
-      cost -= max(0, (sOffset.x - abs(sOffset.y)) / EXPAND_DIST * 1);
+      // incentivize growing forward - offset units 
+      cost -= min(0, (sOffset.x - abs(sOffset.y)) / EXPAND_DIST * GROW_FORWARD_FACTOR);
 
       // disincentivize getting too wide - position units
       // disabled - this helps control line vs round but that's already controlled with sideways_cost_ratio
-      // cost += abs(s.position.y * s.position.y) * COST_AVOID_WIDE;
+      // cost += abs(s.position.y * s.position.y) * 0.01;
 
       // super disincentivize growing too far, this is an exponential - position units
       // this is kind of just a failsafe to prevent rampant growth from other costs
@@ -181,7 +198,7 @@ class Leaf {
       cost += s.distanceToRoot * s.distanceToRoot / COST_DISTANCE_TO_ROOT_DIVISOR;
 
       // disincentivize growing behind you - position units
-      cost += exp(-s.position.x * COST_BEHIND_GROWTH);
+      cost += exp(-s.position.x * COST_NEGATIVE_X_GROWTH);
       // println(cost);
       // cost += max(0, -s.position.x) * COST_BEHIND_GROWTH;
 
@@ -195,14 +212,14 @@ class Leaf {
       // cost += BASE_DISINCENTIVE * s.position.y * s.position.y * 1 / (1 + exp(s.position.x * s.position.x / BASE_DIST_FALLOFF));
 
       // give an incentive for going over a specific point - position units
-      // cost -= 1 / (1 + exp(30 - s.position.x));
+      // cost -= 100 / (1 + exp(30 - s.position.x));
 
       // incentivize middle distances to the root
-      // cost -= 1000 / (1 + exp(pow(100 - s.distanceToRoot, 2)));
+      // cost -= 1000 / (1 + exp(pow(50 - s.distanceToRoot, 2) / 100));
 
 
       // incentivize growing in the middle area
-      // cost -= 
+      // cost -=
 
       s.costToRoot = this.costToRoot + cost;
 
@@ -264,9 +281,21 @@ class Leaf {
       }
       return nearestNeighbor;
     }
-    
+
     boolean isImmediateFamily(Small s) {
       return s == this || s.parent == this;
+    }
+
+    boolean isAncestor(Small s) {
+      Small tester = this;
+      while (tester != null) {
+        if (tester == s) {
+          return true;
+        } else {
+          tester = tester.parent;
+        }
+      }
+      return false;
     }
 
     /**
@@ -277,8 +306,8 @@ class Leaf {
       PVector offset = heading.copy().mult(mag);
       PVector position = this.position.copy().add(offset);
       PVector force = new PVector();
-      for (Small s : world) {
-        if (isImmediateFamily(s)) {
+      for (Small s : boundary) {
+        if (isImmediateFamily(s) || isAncestor(s)) {
           continue;
         }
         float dist = dist(s.position.x, s.position.y, position.x, position.y);
@@ -310,7 +339,7 @@ class Leaf {
       if (nearestNeighbor != null && nearestNeighbor.position.dist(childPosition) < TOO_CLOSE_DIST) {
         // we're too close! terminate ourselves
         return ReasonStopped.Crowded;
-        
+
         //isTerminal = true;
         //childPosition.set(nearestNeighbor.position);
       }
@@ -341,13 +370,6 @@ class Leaf {
     }
   }
 
-  void computeWeights() {
-    for (Small s : world) {
-      s.weight = -1;
-    }
-    root.computeWeight();
-  }
-
   boolean finished = false;
   void expandBoundary() {
     if (finished) {
@@ -375,15 +397,19 @@ class Leaf {
     //    terminalNodes.add(s);
     //  }
     //}
-    computeWeights();
-    Collections.sort(world, new Comparator() {
-      public int compare(Object obj1, Object obj2) {
-        Small s1 = (Small)obj1;
-        Small s2 = (Small)obj2;
-        return Integer.compare(s1.weight, s2.weight);
-      }
+
+    // reset weights
+    for (Small s : world) {
+      s.weight = -1;
     }
-    );
+    //Collections.sort(world, new Comparator() {
+    //  public int compare(Object obj1, Object obj2) {
+    //    Small s1 = (Small)obj1;
+    //    Small s2 = (Small)obj2;
+    //    return Integer.compare(s1.weight, s2.weight);
+    //  }
+    //}
+    //);
   }
 
   void draw() {
@@ -396,9 +422,11 @@ class Leaf {
   }
 
   void drawWorld() {
+    // computes whole subtree
+    root.computeWeight();
     for (Small s : world) {
-      //strokeWeight(log(1 + s.weight / 3));
-      strokeWeight(pow(s.weight, 1f / 3));
+      strokeWeight(log(1 + s.weight) / 10);
+      //strokeWeight(pow(s.weight, 1f / 3) / 10);
       stroke(0, 128);
       s.draw();
       fill(0, 64);
@@ -409,12 +437,22 @@ class Leaf {
     }
     for (Small s : terminalNodes) {
       if (s.reason == ReasonStopped.Expensive) {
-        strokeWeight(1);
-        stroke(64, 255, 75);
-        s.draw();
+      strokeWeight(1);
+      stroke(64, 255, 75);
+      s.draw();
       }
     }
+
     // drawBoundary();
+  }
+
+  // degenerate:
+  // doesn't grow at all
+  // terminal nodes < 10
+  // alternatively, to get rid of grass:
+  //   terminal nodes who are terminal because it was too expensive.size < 10 
+  boolean isDegenerate() {
+    return terminalNodes.size() < 10;
   }
 
   void drawBoundary() {
@@ -446,8 +484,11 @@ boolean liveMorph = false;
 
 void setup() {
   size(1920, 1080);
-  // initLeafSingle();
+  //initLeafSingle();
   initLeafGrid();
+
+  //for (Leaf l : leaves) {
+  //}
 }
 
 void initLeafSingle() {
@@ -456,17 +497,28 @@ void initLeafSingle() {
 }
 
 void initLeafGrid() {
-  int gridHeight = 10;
-  int gridWidth = 5;
+  int gridHeight = 6;
+  int gridWidth = 9;
   leaves = new Leaf[gridWidth * gridHeight];
   for (int i = 0; i < leaves.length; i++) {
     float x = i % gridWidth + 0.5;
     float y = i / gridWidth + 0.5;
-    Leaf leaf = new Leaf(
-      map(x, 0, gridWidth, 0, width), 
-      map(y, 0, gridHeight, 0, height), 
-      0.5
-      );
+    Leaf leaf;
+    do {
+      leaf = new Leaf(
+        map(x - 0.4, 0, gridWidth, 0, width),
+        map(y, 0, gridHeight, 0, height), 
+        1.75
+        );
+  
+      for (int z = 0; z < 200; z++) {
+        leaf.expandBoundary();
+        //if (leaves[0].finished) {
+        //  println(i);
+        //}
+      }
+    } while (leaf.isDegenerate());
+    println(i);
     //leaf.MAX_PATH_COST = 150;
     // leaf.AVOID_NEIGHBOR_FORCE = map(y, 0, gridHeight, 0, 0);
     // leaf.DEPTH_STEPS_BEFORE_BRANCHING = (int)map(x, 0, gridWidth, 1, 5);
@@ -476,15 +528,6 @@ void initLeafGrid() {
     //leaf.TURN_TOWARDS_X_FACTOR = map(y, 0, gridHeight, 0.01, 1.0);
     leaves[i] = leaf;
   }
-  
-    for (int i = 0; i < 20 && !leaves[0].finished; i++) {
-      for (Leaf l : leaves) {
-        l.expandBoundary();
-        //if (leaves[0].finished) {
-        //  println(i);
-        //}
-      }
-    }
 }
 
 void mousePressed() {
@@ -500,13 +543,16 @@ void mousePressed() {
 void draw() {
   background(255);
   if (mousePressed && mouseButton == RIGHT) {
-    //translate(-mouseX, -mouseY);
-    scale(2);
-    translate(width/2, height/2);
+    scale(5);
+    float centerX = mouseX;
+    float centerY = mouseY;
+    float leftX = centerX;
+    float topY = centerY;
+    translate(-leftX, -topY);
   }
   // translate(0, height / 2);
   // scale(0.5, 0.5);
-  if (liveMorph) {
+  if (liveMorph && mousePressed && mouseButton == LEFT) {
     initLeafSingle();
     //leaves[0].BASE_DISINCENTIVE = pow(10, map(cos(millis() / 450f), -1, 1, 0, 3));
     //leaves[0].BASE_DISINCENTIVE = pow(10, map(mouseX, 0, width, 0, 3));
@@ -518,16 +564,25 @@ void draw() {
 
     //leaves[0].COST_BEHIND_GROWTH = pow(10, map(mouseX, 0, width, -10, 3));
 
-    for (int i = 0; i < 100 && !leaves[0].finished; i++) {
+    //leaves[0].GROW_FORWARD_FACTOR = pow(map(mouseX, 0, width, 0, 5), 3);
+
+    //leaves[0].MAX_PATH_COST = pow(10, map(mouseX, 0, width, 0, 3));
+
+    for (int i = 0; i < 200 && !leaves[0].finished; i++) {
       leaves[0].expandBoundary();
       if (leaves[0].finished) {
         println(i);
       }
+    }
+    if (!leaves[0].finished) {
+      println("not finished");
     }
   }
   for (Leaf l : leaves) {
     //l.expandBoundary();
     l.draw();
   }
+  saveFrame("leaves.png");
+  noLoop();
   //println(frameRate);
 }
