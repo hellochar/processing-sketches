@@ -35,12 +35,13 @@ class Leaf {
   float SIDEWAYS_COST_RATIO = 0.5;
   float SIDE_ANGLE = PI / 2 * 0.7; // past PI/2 doesn't make sense
   float SIDE_ANGLE_RANDOM = PI / 2 * 0.2;
-  int DEPTH_STEPS_BEFORE_BRANCHING = 2;
+  int DEPTH_STEPS_BEFORE_BRANCHING = 4;
   float TURN_TOWARDS_X_FACTOR = 0.0;
-  float AVOID_NEIGHBOR_FORCE = 0;
+  float AVOID_NEIGHBOR_FORCE = 1;
   float randWiggle = 0.01;
-  float BASE_DISINCENTIVE = 1000;
-  float BASE_DIST_FALLOFF = 200;
+  float BASE_DISINCENTIVE = 100;
+  float COST_DISTANCE_TO_ROOT_DIVISOR = 1e5;
+  float COST_BEHIND_GROWTH = 0;
   boolean growForwardBranch = true;
 
 
@@ -83,17 +84,23 @@ class Leaf {
       cost += abs(sOffset.y * sOffset.y) * SIDEWAYS_COST_RATIO;
 
       // incentivize growing forward - offset units
+      // disabled - this does make it longer, but that responsibility is more cleanly covered with maxCost
       // cost -= log(1 + (sOffset.x / EXPAND_DIST) * 2); // careful about blowing out the cost here
-      // cost -= min(0, sOffset.x / EXPAND_DIST * 1);
+      // cost -= max(0, sOffset.x / EXPAND_DIST * INCENTIVE_GROW_FORWARD);
 
       // disincentivize getting too wide - position units
-      // cost += abs(s.position.y) * 0.1;
+      // disabled - this helps control line vs round but that's already controlled with sideways_cost_ratio
+      // cost += abs(s.position.y * s.position.y) * COST_AVOID_WIDE;
 
       // super disincentivize growing too far, this is an exponential - position units
-      // cost += s.distanceToRoot / 50;
+      // this is kind of just a failsafe to prevent rampant growth from other costs
+      // we should probably just keep this at like 1e5 or so
+      cost += s.distanceToRoot * s.distanceToRoot / COST_DISTANCE_TO_ROOT_DIVISOR;
 
       // disincentivize growing behind you - position units
-      cost += exp(-s.position.x) * 0.01;
+      cost += exp(-s.position.x * COST_BEHIND_GROWTH);
+      // println(cost);
+      // cost += max(0, -s.position.x) * COST_BEHIND_GROWTH;
 
       // disincentivize growing laterally when you're too close to the base - position units
       // this makes nice elliptical shapes
@@ -141,6 +148,7 @@ class Leaf {
         // make offset go towards +x
         forwardOffset.x += (EXPAND_DIST - forwardOffset.x) * TURN_TOWARDS_X_FACTOR;
         forwardOffset.rotate(symmetricRandom(-randWiggle, randWiggle, this.position.y * 100));
+        forwardOffset.setMag(EXPAND_DIST);
         reason = maybeAddBranch(forwardOffset);
       }
 
@@ -154,74 +162,62 @@ class Leaf {
         maybeAddBranch(negativeTurnOffset);
       }
     }
-
-    ReasonStopped maybeAddBranch(PVector offset) {
-      //// make offset go towards +x
-      //offset.x += (EXPAND_DIST - offset.x) * TURN_TOWARDS_X_FACTOR;
-
-      // offset.setMag(EXPAND_DIST);
-      PVector childPosition = this.position.copy().add(offset);
-      if (this.costToRoot > MAX_PATH_COST) {
-        return ReasonStopped.Expensive;
-      }
-      boolean isTerminal = false;
+    
+    /**
+     * Get the nearest small to the point where I'm not the parent.
+     */
+    Small nearestCollidableNeighbor(PVector point) {
       Small nearestNeighbor = null;
       float nearestNeighborDist = 1e10;
-      PVector force = new PVector();
       for (Small s : world) {
-        float dist = dist(s.position.x, s.position.y, childPosition.x, childPosition.y);
-
-        PVector awayFromNeighborOffset = childPosition.copy().sub(s.position);
-        float forceMag = -AVOID_NEIGHBOR_FORCE / dist;
-        awayFromNeighborOffset.setMag(forceMag);
-        force.add(awayFromNeighborOffset);
-
-        if (dist < TOO_CLOSE_DIST && s.parent != this) {
-          // we're too close, abort.
-          return ReasonStopped.Crowded;
-
-          //childPosition = s.position;
-          // isTerminal = true;
-
-          // avoid your neighbor a little bit
-          //PVector awayFromNeighborOffset = childPosition.copy().sub(s.position).setMag(TOO_CLOSE_DIST);
-          //// note - this can actually move you into a previous neighbor... just ignore that for now though
-          //childPosition.add(awayFromNeighborOffset);
-          //isTerminal = true;
-
-          //float force = AVOID_NEIGHBOR_FORCE / nearestNeighborDist;
-          //awayFromNeighborOffset.setMag(force);
-          //offset.add(awayFromNeighborOffset);
-          //offset.setMag(EXPAND_DIST);
-          //// note - this can actually move you into another neighbor... just ignore that for now though
-          //childPosition = this.position.copy().add(offset);
-
-
-          //break;
+        if (s.parent == this) {
+          continue;
         }
+        float dist = dist(s.position.x, s.position.y, point.x, point.y);
         if (dist < nearestNeighborDist) {
           nearestNeighborDist = dist;
           nearestNeighbor = s;
         }
       }
-      
+      return nearestNeighbor;
+    }
+    
+    /**
+     * Returns a new offset after the old would-be point has been repelled from everyone 
+     */
+    PVector avoidEveryone(PVector offset) {
+      PVector position = this.position.copy().add(offset);
+      PVector force = new PVector();
+      for (Small s : world) {
+        float dist = dist(s.position.x, s.position.y, position.x, position.y);
+        PVector awayFromNeighborOffset = position.copy().sub(s.position);
+        float forceMag = -AVOID_NEIGHBOR_FORCE / dist;
+        awayFromNeighborOffset.setMag(forceMag);
+        force.add(awayFromNeighborOffset);
+      }
       // note - this can actually move you into another neighbor... just ignore that for now though
-      offset.add(force);
-      offset.setMag(EXPAND_DIST);
-      childPosition = this.position.copy().add(offset);
-      
-      //if (nearestNeighbor != null) {
-      //  // one last step - avoid your neighbor a little bit
-      //  PVector awayFromNeighborOffset = childPosition.copy().sub(nearestNeighbor.position);
-      //  float force = AVOID_NEIGHBOR_FORCE / nearestNeighborDist;
-      //  awayFromNeighborOffset.setMag(force);
-      //  offset.add(awayFromNeighborOffset);
-      //  offset.setMag(EXPAND_DIST);
-      //  // note - this can actually move you into another neighbor... just ignore that for now though
-      //  childPosition = this.position.copy().add(offset);
-      //}
+      PVector newOffset = offset.copy().add(force).setMag(EXPAND_DIST);
+      return newOffset;
+    }
 
-      // we're not too close! put one here
+    ReasonStopped maybeAddBranch(PVector offset) {
+      if (this.costToRoot > MAX_PATH_COST) {
+        return ReasonStopped.Expensive;
+      }
+      //// make offset go towards +x
+      //offset.x += (EXPAND_DIST - offset.x) * TURN_TOWARDS_X_FACTOR;
+      // offset.setMag(EXPAND_DIST);
+      PVector avoidedOffset = avoidEveryone(offset);
+      // we've now moved away from everyone.
+      PVector childPosition = this.position.copy().add(avoidedOffset);
+      boolean isTerminal = false;
+      Small nearestNeighbor = nearestCollidableNeighbor(childPosition);
+      if (nearestNeighbor.position.dist(childPosition) < TOO_CLOSE_DIST) {
+        // we're too close! terminate ourselves
+        //isTerminal = true;
+        return ReasonStopped.Crowded;
+      }
+      
       Small newSmall = new Small(childPosition);
       newSmall.isTerminal = isTerminal;
       this.add(newSmall);
@@ -253,20 +249,6 @@ class Leaf {
       s.weight = -1;
     }
     root.computeWeight();
-    // start from the boundaries and work backwards
-    //Set<Small> level = new HashSet();
-    //// level.addAll(boundary);
-    //level.addAll(terminalNodes);
-    //while (level.size() > 0) {
-    //  Set<Small> newLevel = new HashSet();
-    //  for (Small s : level) {
-    //    if (s.parent != null) {
-    //      s.parent.weight += s.weight;
-    //      newLevel.add(s.parent);
-    //    }
-    //  }
-    //  level = newLevel;
-    //}
   }
 
   boolean finished = false;
@@ -297,6 +279,13 @@ class Leaf {
     //  }
     //}
     computeWeights();
+    Collections.sort(world, new Comparator() {
+      public int compare(Object obj1, Object obj2) {
+        Small s1 = (Small)obj1;
+        Small s2 = (Small)obj2;
+        return Integer.compare(s1.weight, s2.weight);
+      }
+    });
   }
 
   void draw() {
@@ -364,7 +353,7 @@ void setup() {
 
 void initLeafSingle() {
   leaves = new Leaf[1];
-  leaves[0] = new Leaf(width/6, height/2, 1.0);
+  leaves[0] = new Leaf(width/6, height/2, 0.5);
 }
 
 void initLeafGrid() {
@@ -384,9 +373,8 @@ void initLeafGrid() {
     // leaf.DEPTH_STEPS_BEFORE_BRANCHING = (int)map(x, 0, gridWidth, 1, 5);
     // leaf.SIDE_ANGLE = map(x, 0, gridWidth, PI / 8, PI / 2);
     // leaf.SIDEWAYS_COST_RATIO = map(y, 0, gridHeight, 0.0, 0.2);
-    // leaf.TURN_TOWARDS_X_FACTOR = map(y, 0, gridHeight, 0.01, 1.0);
     leaf.BASE_DISINCENTIVE = pow(10, map(x, 0, gridWidth, 0, 5));
-    leaf.BASE_DIST_FALLOFF = pow(5, map(y, 0, gridHeight, 0, 5));
+    leaf.TURN_TOWARDS_X_FACTOR = map(y, 0, gridHeight, 0.01, 1.0);
     leaves[i] = leaf;
   }
 }
@@ -404,21 +392,73 @@ void mousePressed() {
 void draw() {
   background(255);
   if (mousePressed && mouseButton == RIGHT) {
-    translate(-mouseX, -mouseY);
-    scale(2);
+    //translate(-mouseX, -mouseY);
+    scale(0.5);
+    translate(width, height/2);
   }
   // translate(0, height / 2);
   // scale(0.5, 0.5);
   if (liveMorph) {
     initLeafSingle();
-    // leaves[0].SIDE_ANGLE = map(sin(millis() / 3000f), -1, 1, PI / 6, PI/2);
-    // leaves[0].BASE_DISINCENTIVE = pow(10, map(cos(millis() / 450f), -1, 1, 0, 3));
-    leaves[0].BASE_DISINCENTIVE = 10;
-    leaves[0].SIDEWAYS_COST_RATIO = map(mouseX, 0, width, 0, 1);
-    leaves[0].SIDE_ANGLE = map(mouseY, 0, height, PI/6, PI/2);
+    // parameters:
     
-    // leaves[0].TURN_TOWARDS_X_FACTOR = map(mouseY, 0, height, 0, 1);
-    for (int i = 0; i < 100; i++) {
+    
+    /* base_disincentive
+     * 0 to 1, 10, 100, and 1000 all produce interesting changes
+     * generally speaking, 0 = cordate, 1000 = linear/lanceolate
+     */
+    leaves[0].BASE_DISINCENTIVE = 0;
+    //leaves[0].BASE_DISINCENTIVE = pow(10, map(cos(millis() / 450f), -1, 1, 0, 3));
+    //leaves[0].BASE_DISINCENTIVE = pow(10, map(mouseX, 0, width, 0, 3));
+    
+    /*
+     * max_path_cost
+     * Linear scalar of how big the plant grows; good numbers are 100 to 1000.
+     */
+    leaves[0].MAX_PATH_COST = 1000;
+    
+    /* cost_distance_to_root
+     * Failsafe on unbounded growth. Basically leave this around 1e5 to bound the plant at distance ~600.
+     */
+    leaves[0].COST_DISTANCE_TO_ROOT_DIVISOR = pow(10, 5);
+    
+    /* side_angle
+     * controls the complexity of the edge and angular look of the inner vein system
+     *   <PI / 6 = degenerate "nothing grows" case.
+     *   PI/6 to PI/2 = the fractal edge changes in interesting ways.
+     *     generally at PI/6 it's more circular/round, and at PI/2 it's more pointy.
+     */
+    leaves[0].SIDE_ANGLE = PI / 3;
+    //leaves[0].SIDE_ANGLE = map(sin(millis() / 3000f), -1, 1, PI / 6, PI/2);
+    //leaves[0].SIDE_ANGLE = map(mouseY, 0, height, PI/6, PI/2);
+    
+    /* sideways_cost_ratio
+     * Powerful number that controls how fat the leaf grows.
+     * -1 = obovate, truncate, obcordate
+     * -0.2 = cuneate, orbicular
+     * 0 = ellipse
+     * 1+ = subulate
+     */
+    leaves[0].SIDEWAYS_COST_RATIO = 0.25;
+    //leaves[0].SIDEWAYS_COST_RATIO = map(mouseX, 0, width, 0, 1);
+    
+    /*
+     * cost_behind_growth
+     * keeps leaves from unboundedly growing backwards.
+     * 1e-3 and below basically has no effect.
+     * from 1e-3 to 1, the back edge of the leaf shrinks to nothing.
+     * You probably want this around 0.2 to 0.5.
+     * Around 0.3 you can get cordate shapes with the right combination of parameters.
+     */
+    leaves[0].COST_BEHIND_GROWTH = 0.3; // pow(10, map(mouseX, 0, width, -10, 3));
+    
+    /**
+     * turn_towards_x_factor
+     * gives veins an upwards curve.
+     */
+    leaves[0].TURN_TOWARDS_X_FACTOR = map(mouseX, 0, width, 0, 1);
+    
+    for (int i = 0; i < 20; i++) {
       leaves[0].expandBoundary();
     }
   }
@@ -426,5 +466,5 @@ void draw() {
     //l.expandBoundary();
     l.draw();
   }
-  println(frameRate);
+  //println(frameRate);
 }
