@@ -120,6 +120,27 @@ class Link {
     nextAngle = newAngle;
   }
   
+  // This doesn't work well since you can't go backwards in time (the log is negative)
+  // so we hit the edge case (where you get a NaN for t) *a lot* 
+  void analyticalNextAngle(float dt) {
+    // for a constant G, the integral is O = 1*e^(-kt) + G/k
+    // so we want the next O. We need to figure out the "current time" based off our current O, then add dt, then compute the next O
+    // O - G/k = 1*e^(-kt)
+    // log(O - G/k) = -kt
+    // -log(O - G/k) / k = t
+    // -log(O - (k*wantedAngle + G) / k) / k = t
+    float G = 1;
+    float stiffness = 1; // map(mouseX, 0, width, 1, 10);
+    float wantedAngle = map(mouseY, 0, height, 0, -PI / 4);
+    float t = -log(angle - (stiffness * wantedAngle + G) / stiffness) / stiffness;
+    if (t != t) {
+      t = 0;
+    }
+    float tNew = t + dt;
+    float newTheta = exp(-stiffness*tNew) + (stiffness * wantedAngle + G) / stiffness;
+    nextAngle = newTheta;
+  }
+  
   /**
    * Invalidates the position of this link and all downstream links. Be sure to recompute them.
    */
