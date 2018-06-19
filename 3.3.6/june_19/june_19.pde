@@ -1,15 +1,16 @@
 PGraphics img; //<>//
 
 void setup() {
-  size(1920, 600, P2D);
+  size(800, 600, P2D);
   img = createGraphics(width, height, P2D);
   img.beginDraw();
   img.background(255);
+  img.blendMode(BLEND);
   img.endDraw();
   followers = new Follower[400];
   for (float i = 0; i < followers.length; i++) {
-    float lx = pow(0.02 + (i + 1) / followers.length / 10, 2);
-    float ly = pow(0.02 + (i + 1) / followers.length / 10, 2);
+    float lx = pow(0.02 + (i + 1) / followers.length / 3, 2);
+    float ly = pow(0.02 + (i + 1) / followers.length / 3, 2);
     followers[(int)i] = new Follower(lx, ly);
   }
 }
@@ -89,9 +90,9 @@ class Follower {
     img.strokeWeight(this.radius());
     // img.strokeCap(PROJECT);
     if (mousePressed) {
-      opacity = lerp(opacity, 9, 0.1);
+      opacity = lerp(opacity, 9, 0.03);
     } else {
-      opacity = lerp(opacity, 0, 0.1);
+      opacity = lerp(opacity, 0, 0.03);
     }
     img.stroke(0, opacity);
     img.noFill();
