@@ -47,7 +47,7 @@ class Leaf {
    * Linear scalar of how big the plant grows; good numbers are 100 to 1000.
    * For high fidelity, pump this up to like 5000
    */
-  float MAX_PATH_COST = 400;
+  float MAX_PATH_COST = 1000;
   /* sideways_cost_ratio
    * Powerful number that controls how fat the leaf grows.
    * -1 = obovate, truncate, obcordate
@@ -88,7 +88,7 @@ class Leaf {
    * 3+ bit spacious and e.g. gives room for turn_towards_x_factor
    * 6 is probably max here.
    */
-  int DEPTH_STEPS_BEFORE_BRANCHING = 1 + (int)random(0, 3); // 2
+  int DEPTH_STEPS_BEFORE_BRANCHING = 4; // 2
 
   /**
    * branch_depth_mod
@@ -100,7 +100,7 @@ class Leaf {
    * 2-10 creates larger crevases.
    * To get complex boundaries, DEPTH_STEPS_BEFORE_BRANCHING * BRANCH_DEPTH_MOD should be around 10-20.
    */
-  int SECONDARY_BRANCH_PERIOD = 1 + (int)(random(1) * random(1) * random(1) * 6);
+  int SECONDARY_BRANCH_PERIOD = 10;
 
   /**
    * turn_towards_x_factor
@@ -159,6 +159,16 @@ class Leaf {
    */
   float SECONDARY_BRANCH_SCALAR = 1 - (random(1) * random(1) * 0.2); //0.85;
 
+  /**
+   * Can help define a more jagged/deeper edge.
+   * < -100 = makes things much fatter/more kidney-like. Creates quite complex edges.
+   * -100 - 0 = incentivizes curving; creates edges with many fine little details. 
+   * 0 - 20 = no effect
+   * 20 - 40 = helps make more jagged edges, like maple leaves (but it might be suppressed by other parameters)
+   * 40 - 100 = even more jagged edges, but starting to degenerate
+   * > 100 = degenerates
+   * 
+   */
   float COST_TO_TURN = 0;
 
   /**
@@ -255,9 +265,9 @@ class Leaf {
       //cost += s.numTurns * STRAIGHT_INCENTIVE_FACTOR;
 
       // disincentivize turns
-      //if (isTurn) {
-      cost += COST_TO_TURN * s.numTurns;
-      //}
+      if (isTurn) {
+        cost += COST_TO_TURN;
+      }
 
       // disincentivize growing laterally when you're too close to the base, but with much stronger falloff - position units
       // good parameters
@@ -547,24 +557,22 @@ Leaf[] leaves;
 boolean liveMorph = false;
 
 void setup() {
-  size(1920, 1080);
+  size(960, 540);
   noiseSeed(0);
-  //initLeafSingle();
-  initLeafGrid();
-
-  //for (Leaf l : leaves) {
-  //}
+  initLeafSingle();
+  //initLeafGrid();
 }
 
 void initLeafSingle() {
   leaves = new Leaf[1];
-  leaves[0] = new Leaf(width/6, height/2, 6);
-  //for (int z = 0; z < 200; z++) {
-  //  leaves[0].expandBoundary();
-  //if (leaves[0].finished) {
-  //println(z);
-  //}
-  //}
+  leaves[0] = new Leaf(width/6, height/2, 4);
+  for (int z = 0; z < 10000; z++) {
+    leaves[0].expandBoundary();
+    if (leaves[0].finished) {
+      break;
+    }
+    println(z);
+  }
 }
 
 void initLeafGrid() {
@@ -591,7 +599,7 @@ void initLeafGrid() {
       //leaf.TURN_TOWARDS_X_FACTOR = map(y, 0, gridHeight, 0.01, 1.0);
       //leaf.STRAIGHT_INCENTIVE_FACTOR = map(x, 0, gridWidth, 0, 10);
 
-      for (int z = 0; z < 200; z++) {
+      for (int z = 0; z < 1000; z++) {
         leaf.expandBoundary();
         //if (leaves[0].finished) {
         //println(z);
@@ -610,6 +618,12 @@ void mousePressed() {
         l.expandBoundary();
       }
     }
+  }
+}
+
+void keyPressed() {
+  if (key == ' ') {
+    initLeafSingle();
   }
 }
 
@@ -655,12 +669,12 @@ void draw() {
     leaves[0].SECONDARY_BRANCH_SCALAR = 0.85;
     leaves[0].SECONDARY_BRANCH_PERIOD = max(1, (int)map(mouseY, 0, height, 1, 10));
     leaves[0].DEPTH_STEPS_BEFORE_BRANCHING = 3; // max(1, (int)map(mouseX, 0, width, 1, 6));
-    leaves[0].COST_TO_TURN = map(mouseX, 0, width, 0, 100);
+    leaves[0].COST_TO_TURN = map(mouseX, 0, width, -100, 100);
 
-    for (int i = 0; i < 200 && !leaves[0].finished; i++) {
+    for (int i = 0; i < 1000 && !leaves[0].finished; i++) {
       leaves[0].expandBoundary();
       if (leaves[0].finished) {
-        println(i);
+        println("finished in " + i + " iterations");
       }
     }
     if (!leaves[0].finished) {
@@ -674,7 +688,8 @@ void draw() {
   fill(0);
   textAlign(LEFT, TOP);
   textSize(20);
-  text(leaves[0].DEPTH_STEPS_BEFORE_BRANCHING + "\n" + leaves[0].SECONDARY_BRANCH_PERIOD, 0, 0);
+
+  text(leaves[0].COST_TO_TURN, 0, 0);
   //saveFrame("leaves.png");
   //noLoop();
   //println(frameRate);
