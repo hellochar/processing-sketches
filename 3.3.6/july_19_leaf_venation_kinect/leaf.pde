@@ -7,12 +7,7 @@ class Leaf {
   // nodes without any children
   List<Small> terminalNodes = new ArrayList();
 
-  float x, y, scale;
-
-  Leaf(float x, float y, float scale) {
-    this.x = x;
-    this.y = y;
-    this.scale = scale;
+  Leaf() {
     root = new Small(new PVector(EXPAND_DIST, 0));
     root.distanceToRoot = 0;
     root.costToRoot = 0;
@@ -20,7 +15,7 @@ class Leaf {
   }
 
   // distance between branches. this kind of controls the fine detail of the leaves.s
-  float TOO_CLOSE_DIST = 1;
+  float TOO_CLOSE_DIST = 2;
   /**
    * < 0.5 always degenerates - no branching
    * 0.75 still has some degenerates
@@ -29,7 +24,7 @@ class Leaf {
    * 1 to 1.5 - makes more aristate and cuneate shapes
    * > 1.5 degenerates - vein crisscrossing
    */
-  float EXPAND_SCALAR = random(0.75, 1.25); //0.75; //1
+  float EXPAND_SCALAR = 0.85;
 
   float EXPAND_DIST = TOO_CLOSE_DIST * EXPAND_SCALAR;
   /**
@@ -37,7 +32,7 @@ class Leaf {
    * Linear scalar of how big the plant grows; good numbers are 100 to 1000.
    * For high fidelity, pump this up to like 5000
    */
-  float MAX_PATH_COST = 1000;
+  float MAX_PATH_COST = 400;
   /* sideways_cost_ratio
    * Powerful number that controls how fat the leaf grows.
    * -1 = obovate, truncate, obcordate
@@ -45,7 +40,7 @@ class Leaf {
    * 0 = ellipse
    * 1+ = spear-shaped, linear, subulate
    */
-  float SIDEWAYS_COST_RATIO = random(-1, 1) * random(1) * 0.5; //0.5;
+  float SIDEWAYS_COST_RATIO = 0.5;
 
   /* side_angle
    * controls the complexity of the edge and angular look of the inner vein system
@@ -53,7 +48,7 @@ class Leaf {
    *   PI/6 to PI/2 = the fractal edge changes in interesting ways.
    *     generally at PI/6 it's more circular/round, and at PI/2 it's more pointy.
    */
-  float SIDE_ANGLE = random(PI/6, PI/2); //PI / 3;
+  float SIDE_ANGLE = PI / 3;
   /**
    * side_angle_random
    * adds a random noise to every side_angle
@@ -68,7 +63,7 @@ class Leaf {
    *
    * Anything beyond like PI / 4 will be pretty messy. 
    */
-  float SIDE_ANGLE_RANDOM = random(1) * random(1) * PI / 6; // random(0, PI / 4); //PI / 6;
+  float SIDE_ANGLE_RANDOM = PI / 6;
 
   /**
    * turn_depths_before_branching
@@ -78,7 +73,7 @@ class Leaf {
    * 3+ bit spacious and e.g. gives room for turn_towards_x_factor
    * 6 is probably max here.
    */
-  int DEPTH_STEPS_BEFORE_BRANCHING = 4; // 2
+  int DEPTH_STEPS_BEFORE_BRANCHING = 2;
 
   /**
    * branch_depth_mod
@@ -90,7 +85,7 @@ class Leaf {
    * 2-10 creates larger crevases.
    * To get complex boundaries, DEPTH_STEPS_BEFORE_BRANCHING * BRANCH_DEPTH_MOD should be around 10-20.
    */
-  int SECONDARY_BRANCH_PERIOD = 10;
+  int SECONDARY_BRANCH_PERIOD = 5;
 
   /**
    * turn_towards_x_factor
@@ -100,7 +95,7 @@ class Leaf {
    * careful - high numbers > 0.5 can cause degenerate early vein termination.
    * -1 is an oddity that looks cool but isn't really realistic (veins flowing backwards).
    */
-  float TURN_TOWARDS_X_FACTOR = random(1) * random(1) * 0.1; // 0.2
+  float TURN_TOWARDS_X_FACTOR = 0.2;
 
   /**
    * avoid_neighbor_force
@@ -111,7 +106,7 @@ class Leaf {
    * you can also go negative which creates these inwards clawing veins. It looks cool, but isn't really realistic.
    * avoid neighbor can help prevent early vein termination from e.g. turn_towards_x_factor.
    */
-  float AVOID_NEIGHBOR_FORCE = random(1) * random(1) * 0.1; // 1
+  float AVOID_NEIGHBOR_FORCE = 1;
 
   float randWiggle = 0.0;
 
@@ -119,7 +114,7 @@ class Leaf {
    * 0 to 1, 10, 100, and 1000 all produce interesting changes
    * generally speaking, 0 = cordate, 1000 = linear/lanceolate
    */
-  float BASE_DISINCENTIVE = pow(10, random(0, 3)); //100
+  float BASE_DISINCENTIVE = 100;
 
   /* cost_distance_to_root
    * Failsafe on unbounded growth. Basically leave this around 1e5 to bound the plant at distance ~600.
@@ -133,7 +128,7 @@ class Leaf {
    * You probably want this around 0.2 to 0.5.
    * Around 0.3 you can get cordate shapes with the right combination of parameters.
    */
-  float COST_NEGATIVE_X_GROWTH = pow(10, random(-1, 0)); // 0.2
+  float COST_NEGATIVE_X_GROWTH = 0.2;
 
   /**
    * grow_forward_factor
@@ -141,13 +136,13 @@ class Leaf {
    * Anything below 10 basically has no effect. 
    * At 100 basically every leaf becomes ovate, and also increases the number of steps taken.
    */
-  float GROW_FORWARD_FACTOR = pow(10, random(0, 2)); // 10
+  float GROW_FORWARD_FACTOR = 10;
 
   /**
    * max 1,
    * below 0.7 it starts degenerating
    */
-  float SECONDARY_BRANCH_SCALAR = 1 - (random(1) * random(1) * 0.2); //0.85;
+  float SECONDARY_BRANCH_SCALAR = 0.85;
 
   /**
    * Can help define a more jagged/deeper edge.
@@ -237,6 +232,8 @@ class Leaf {
       // disincentivize growing laterally when you're too close to the base - position units
       // this makes nice elliptical shapes
       cost += BASE_DISINCENTIVE * s.position.y * s.position.y * 1 / (1 + s.position.x * s.position.x);
+      
+      cost += s.closeToMouseness() / 10;
 
       //Small lastBranch = this;
       //// children.get(0) is usually the forward vein. But we do .get(0) to be adaptable for
@@ -275,6 +272,20 @@ class Leaf {
       // cost -=
 
       s.costToRoot = this.costToRoot + cost;
+    }
+    
+    PVector screenCoordinates() {
+      float screenX = leafToScreenX(position.x, position.y);
+      float screenY = leafToScreenY(position.x, position.y);
+      return new PVector(screenX, screenY);
+    }
+    
+    float closeToMouseness() { 
+      if (screenCoordinates().dist(new PVector(mouseX, mouseY)) < 50) {
+        return 1000;
+      } else {
+        return 0;
+      }
     }
 
     PVector offset() {
@@ -477,12 +488,6 @@ class Leaf {
   }
 
   void draw() {
-    pushMatrix();
-    translate(x, y);
-    textSize(14 / scale);
-    scale(scale);
-    drawWorld();
-    popMatrix();
   }
 
   void drawWorld() {
@@ -493,11 +498,20 @@ class Leaf {
       //strokeWeight(pow(s.weight, 1f / 3) / 10);
       stroke(0, 128);
       s.draw();
-      fill(0, 64);      
-      //text(int(100 * (s.costToRoot / MAX_PATH_COST)), s.position.x, s.position.y);
-      //text(s.weight, s.position.x, s.position.y);
-      //text(s.numTurns, s.position.x, s.position.y);
-      textAlign(BOTTOM, RIGHT);
+      fill(0, 64);
+      
+      //PVector sc = s.screenCoordinates();
+      //textSize(2);
+      //pushMatrix();
+      //translate(s.position.x, s.position.y);
+      //rotate(PI / 2);
+      //textAlign(BOTTOM, RIGHT);
+      //text((int)sc.x+","+(int)sc.y, 0, 0);
+      //// text((int)s.position.x+","+(int)s.position.y, 0, 0);
+      ////text(s.closeToMouseness(), 0, 0);
+      ////text(s.numTurns, s.position.x, s.position.y);
+      ////text(int(100 * (s.costToRoot / MAX_PATH_COST)), s.position.x, s.position.y);
+      //popMatrix();
     }
     for (Small s : terminalNodes) {
       if (s.reason == ReasonStopped.Expensive) {
