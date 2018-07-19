@@ -34,7 +34,7 @@ class Leaf {
    * Linear scalar of how big the plant grows; good numbers are 100 to 1000.
    * For high fidelity, pump this up to like 5000
    */
-  float MAX_PATH_COST = 200;
+  float MAX_PATH_COST = 300;
   /* sideways_cost_ratio
    * Powerful number that controls how fat the leaf grows.
    * -1 = obovate, truncate, obcordate
@@ -121,7 +121,7 @@ class Leaf {
   /* cost_distance_to_root
    * Failsafe on unbounded growth. Basically leave this around 1e5 to bound the plant at distance ~600.
    */
-  float COST_DISTANCE_TO_ROOT_DIVISOR = 5e3; // 1e5;
+  float COST_DISTANCE_TO_ROOT_DIVISOR = 5e4; // 1e5;
   /*
    * cost_negative_x_growth
    * keeps leaves from unboundedly growing backwards.
@@ -319,10 +319,12 @@ class Leaf {
 
     ReasonStopped reason;
     // attempt to grow outwards in your direction and to the side
-    void branchOut() {
+    List<Small> branchOut() {
+      List<Small> nodes = new ArrayList();
       if (isTerminal) {
         reason = ReasonStopped.Crowded;
-        return;
+        nodes.add(this);
+        return nodes;
       }
       PVector offset = this.offset();
       float mag = offset.mag();
@@ -349,6 +351,12 @@ class Leaf {
         PVector negativeTurnOffset = forward.copy().rotate(-rotAngle);
         maybeAddBranch(negativeTurnOffset, mag * sideScalar);
       }
+      if (children.size() == 0) {
+        nodes.add(this);
+      } else {
+        nodes.addAll(children);
+      }
+      return nodes;
     }
 
     /**
@@ -476,6 +484,7 @@ class Leaf {
     List<Small> newBoundary = new ArrayList();
     for (Small s : boundary) {
       s.branchOut();
+      //newBoundary.addAll(s.branchOut());
       newBoundary.addAll(s.children);
     }
     if (newBoundary.size() == 0) {
@@ -520,7 +529,7 @@ class Leaf {
     color gray = #397a4c;
     color green = #808080;
     for (Small s : world) {
-      strokeWeight(log(1 + s.weight) / 7);
+      strokeWeight(log(1 + s.weight) / 4);
       stroke(lerpColor(gray, green, s.costToRoot / MAX_PATH_COST));
       s.draw();
       
