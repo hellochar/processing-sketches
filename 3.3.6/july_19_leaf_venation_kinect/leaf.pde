@@ -34,7 +34,7 @@ class Leaf {
    * Linear scalar of how big the plant grows; good numbers are 100 to 1000.
    * For high fidelity, pump this up to like 5000
    */
-  float MAX_PATH_COST = 500;
+  float MAX_PATH_COST = 200;
   /* sideways_cost_ratio
    * Powerful number that controls how fat the leaf grows.
    * -1 = obovate, truncate, obcordate
@@ -97,7 +97,7 @@ class Leaf {
    * careful - high numbers > 0.5 can cause degenerate early vein termination.
    * -1 is an oddity that looks cool but isn't really realistic (veins flowing backwards).
    */
-  float TURN_TOWARDS_X_FACTOR = 0.2;
+  float TURN_TOWARDS_X_FACTOR = 0.1;
 
   /**
    * avoid_neighbor_force
@@ -121,7 +121,7 @@ class Leaf {
   /* cost_distance_to_root
    * Failsafe on unbounded growth. Basically leave this around 1e5 to bound the plant at distance ~600.
    */
-  float COST_DISTANCE_TO_ROOT_DIVISOR = 5e2; // 1e5;
+  float COST_DISTANCE_TO_ROOT_DIVISOR = 5e3; // 1e5;
   /*
    * cost_negative_x_growth
    * keeps leaves from unboundedly growing backwards.
@@ -130,7 +130,7 @@ class Leaf {
    * You probably want this around 0.2 to 0.5.
    * Around 0.3 you can get cordate shapes with the right combination of parameters.
    */
-  float COST_NEGATIVE_X_GROWTH = 0.2;
+  float COST_NEGATIVE_X_GROWTH = 1;
 
   /**
    * grow_forward_factor
@@ -138,7 +138,7 @@ class Leaf {
    * Anything below 10 basically has no effect. 
    * At 100 basically every leaf becomes ovate, and also increases the number of steps taken.
    */
-  float GROW_FORWARD_FACTOR = 10;
+  float GROW_FORWARD_FACTOR = 1;
 
   /**
    * max 1,
@@ -246,9 +246,14 @@ class Leaf {
         //if (brightness < brightnessGate) {
         //  brightness = 0;
         //}
-        //println(alpha);  
-        float value = constrain(map(alpha, 0, 255, 0, 100), 0, 100);
-        cost += value;
+        //println(alpha);
+        if (alpha == 0) {
+          cost += 20;
+        } else {
+          cost -= 1;
+        }
+        //float value = constrain(map(alpha, 0, 255, 0, 100), 0, 100);
+        //cost += value;
       }
 
       //Small lastBranch = this;
@@ -435,10 +440,13 @@ class Leaf {
 
     void draw() {
       if (this.parent != null) {
-        line(this.parent.position.x, this.parent.position.y, this.position.x, this.position.y);
+        //vertex(this.parent.position.x, this.parent.position.y);
+         line(this.parent.position.x, this.parent.position.y, this.position.x, this.position.y);
       } else {
+        //vertex(0, 0);
         line(0, 0, this.position.x, this.position.y);
       }
+      //vertex(this.position.x, this.position.y);
     }
 
     void computeWeight() {
@@ -509,18 +517,19 @@ class Leaf {
   void drawWorld() {
     // computes whole subtree
     root.computeWeight();
+    color gray = #397a4c;
+    color green = #808080;
     for (Small s : world) {
-      strokeWeight(log(1 + s.weight) / 10);
-      //strokeWeight(pow(s.weight, 1f / 3) / 10);
-      stroke(0, 128);
+      strokeWeight(log(1 + s.weight) / 7);
+      stroke(lerpColor(gray, green, s.costToRoot / MAX_PATH_COST));
       s.draw();
-      fill(0, 64);
       
       //PVector sc = s.screenCoordinates();
       //textSize(2);
       //pushMatrix();
       //translate(s.position.x, s.position.y);
       //rotate(PI / 2);
+      //fill(0, 64);
       //textAlign(BOTTOM, RIGHT);
       ////text((int)sc.x+","+(int)sc.y, 0, 0);
       //// text((int)s.position.x+","+(int)s.position.y, 0, 0);
@@ -529,10 +538,11 @@ class Leaf {
       //text(int(100 * (s.costToRoot / MAX_PATH_COST)), 0, 0);
       //popMatrix();
     }
+    endShape();
     for (Small s : terminalNodes) {
       if (s.reason == ReasonStopped.Expensive) {
-        strokeWeight(1);
-        stroke(64, 255, 75);
+        strokeWeight(1.3);
+        stroke(#77c063);
         s.draw();
       }
     }

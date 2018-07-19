@@ -10,11 +10,19 @@ enum ReasonStopped {
 
 Leaf leaf;
 
+PShader personShader;
+
 void setup() {
-  fullScreen();
+//  fullScreen();
+  size(2400, 1350, P2D);
+  pixelDensity(1);
+  smooth();
+  strokeCap(ROUND);
+  strokeJoin(ROUND);
   kinect = new Kinect(this);
   noiseSeed(0);
   initLeafSingle();
+  personShader = loadShader("personShader.glsl");
 }
 
 void initLeafSingle() {
@@ -25,13 +33,14 @@ float brightnessGate = 0;
 
 void draw() {
   background(255);
-  textSize(16); stroke(0);
-  println(frameRate);
   PImage depth = kinect.GetMask();
-  //tint(255, 64);
-  //image(depth, 0, 0, width, height);
-  copy(depth, 0, 0, depth.width, depth.height, 0, 0, width, height);
-  text(mouseX+","+mouseY, mouseX, mouseY);
+  image(depth, 0, 0, width, height);
+  filter(personShader);
+  textSize(16); stroke(0);
+  textAlign(LEFT, TOP);
+  fill(0); stroke(0);
+  text(frameRate, 20, 20);
+//  text(mouseX+","+mouseY, mouseX, mouseY);
   if (mousePressed) {
     float b = brightness(depth.get(
       (int)map(mouseX, 0, width, 0, depth.width),
@@ -66,13 +75,14 @@ void draw() {
     //leaf.MAX_PATH_COST = pow(10, map(mouseX, 0, width, 0, 3));
 
     //leaf.BRANCH_SCALAR = map(mouseX, 0, width, 0.5, 1.0);
-    leaf.SECONDARY_BRANCH_SCALAR = 0.85;
+    //leaf.SECONDARY_BRANCH_SCALAR = 0.85;
     // leaf.SECONDARY_BRANCH_PERIOD = max(1, (int)map(mouseY, 0, height, 1, 10));
-    leaf.DEPTH_STEPS_BEFORE_BRANCHING = 3; // max(1, (int)map(mouseX, 0, width, 1, 6));
+    //leaf.DEPTH_STEPS_BEFORE_BRANCHING = 3; // max(1, (int)map(mouseX, 0, width, 1, 6));
     // leaf.COST_TO_TURN = map(mouseX, 0, width, -100, 100);
 
-    for (int i = 0; i < 1000 && !leaf.finished; i++) {
+    for (int i = 0; i < 150 && !leaf.finished; i++) {
       leaf.expandBoundary();
+      println(i);
       //if (leaf.finished) {
       //  println("finished in " + i + " iterations");
       //}
