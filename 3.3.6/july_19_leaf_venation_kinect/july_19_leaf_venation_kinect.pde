@@ -1,4 +1,8 @@
 import java.util.*;
+import kinect4WinSDK.Kinect;
+import kinect4WinSDK.SkeletonData;
+
+Kinect kinect;
 
 enum ReasonStopped {
   Expensive, Crowded
@@ -8,29 +12,45 @@ Leaf leaf;
 
 void setup() {
   fullScreen();
+  kinect = new Kinect(this);
   noiseSeed(0);
   initLeafSingle();
 }
 
 void initLeafSingle() {
   leaf = new Leaf();
-  //for (int z = 0; z < 1000; z++) {  
-  //  leaf.expandBoundary();
-  //}
 }
+
+float brightnessGate = 0;
 
 void draw() {
   background(255);
   textSize(16); stroke(0);
-  resetMatrix();
+  println(frameRate);
+  PImage depth = kinect.GetMask();
+  //tint(255, 64);
+  //image(depth, 0, 0, width, height);
+  copy(depth, 0, 0, depth.width, depth.height, 0, 0, width, height);
   text(mouseX+","+mouseY, mouseX, mouseY);
+  if (mousePressed) {
+    float b = brightness(depth.get(
+      (int)map(mouseX, 0, width, 0, depth.width),
+      (int)map(mouseY, 0, height, 0, depth.height)
+      ));
+    println(b);
+    brightnessGate = b;
+  }
   useLeafMatrix();
+  
+  depth.loadPixels();
+
   //  leaf.SECONDARY_BRANCH_SCALAR = 0.85;
   //  leaf.SECONDARY_BRANCH_PERIOD = max(1, (int)map(mouseY, 0, height, 1, 10));
   //  leaf.DEPTH_STEPS_BEFORE_BRANCHING = max(1, (int)map(mouseX, 0, width, 1, 6));
 
   if (true) { // constant live morphing
     initLeafSingle();
+    leaf.depthImage = depth;
     //leaf.BASE_DISINCENTIVE = pow(10, map(cos(millis() / 450f), -1, 1, 0, 3));
     //leaf.BASE_DISINCENTIVE = pow(10, map(mouseX, 0, width, 0, 3));
 
@@ -110,16 +130,12 @@ void useLeafMatrix() {
   mat.scale(10);
 }
 
-
 float leafToScreenX(float x, float y) {
   return mat.multX(x, y);
 }
 
 float leafToScreenY(float x, float y) {
   return mat.multY(x, y);
-}
-
-void mousePressed() {
 }
 
 void keyPressed() {

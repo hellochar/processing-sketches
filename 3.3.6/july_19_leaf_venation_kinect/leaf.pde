@@ -6,6 +6,8 @@ class Leaf {
   List<Small> boundary = new ArrayList();
   // nodes without any children
   List<Small> terminalNodes = new ArrayList();
+  
+  PImage depthImage;
 
   Leaf() {
     root = new Small(new PVector(EXPAND_DIST, 0));
@@ -32,7 +34,7 @@ class Leaf {
    * Linear scalar of how big the plant grows; good numbers are 100 to 1000.
    * For high fidelity, pump this up to like 5000
    */
-  float MAX_PATH_COST = 400;
+  float MAX_PATH_COST = 500;
   /* sideways_cost_ratio
    * Powerful number that controls how fat the leaf grows.
    * -1 = obovate, truncate, obcordate
@@ -40,7 +42,7 @@ class Leaf {
    * 0 = ellipse
    * 1+ = spear-shaped, linear, subulate
    */
-  float SIDEWAYS_COST_RATIO = 0.5;
+  float SIDEWAYS_COST_RATIO = -0.2;
 
   /* side_angle
    * controls the complexity of the edge and angular look of the inner vein system
@@ -114,7 +116,7 @@ class Leaf {
    * 0 to 1, 10, 100, and 1000 all produce interesting changes
    * generally speaking, 0 = cordate, 1000 = linear/lanceolate
    */
-  float BASE_DISINCENTIVE = 100;
+  float BASE_DISINCENTIVE = 0;
 
   /* cost_distance_to_root
    * Failsafe on unbounded growth. Basically leave this around 1e5 to bound the plant at distance ~600.
@@ -233,7 +235,21 @@ class Leaf {
       // this makes nice elliptical shapes
       cost += BASE_DISINCENTIVE * s.position.y * s.position.y * 1 / (1 + s.position.x * s.position.x);
       
-      cost += s.closeToMouseness() / 10;
+      // cost += s.closeToMouseness() / 10;
+      
+      PVector screen = s.screenCoordinates();
+      int depthX = (int)map(screen.x, 0, width, 0, depthImage.width);
+      int depthY = (int)map(screen.y, 0, height, 0, depthImage.height);
+      int depthPixelIndex = depthY * depthImage.width + depthX;
+      if (depthPixelIndex >= 0 && depthPixelIndex < depthImage.pixels.length) {
+        float alpha = alpha(depthImage.pixels[depthPixelIndex]);
+        //if (brightness < brightnessGate) {
+        //  brightness = 0;
+        //}
+        //println(alpha);  
+        float value = constrain(map(alpha, 0, 255, 0, 100), 0, 100);
+        cost += value;
+      }
 
       //Small lastBranch = this;
       //// children.get(0) is usually the forward vein. But we do .get(0) to be adaptable for
@@ -506,11 +522,11 @@ class Leaf {
       //translate(s.position.x, s.position.y);
       //rotate(PI / 2);
       //textAlign(BOTTOM, RIGHT);
-      //text((int)sc.x+","+(int)sc.y, 0, 0);
+      ////text((int)sc.x+","+(int)sc.y, 0, 0);
       //// text((int)s.position.x+","+(int)s.position.y, 0, 0);
       ////text(s.closeToMouseness(), 0, 0);
       ////text(s.numTurns, s.position.x, s.position.y);
-      ////text(int(100 * (s.costToRoot / MAX_PATH_COST)), s.position.x, s.position.y);
+      //text(int(100 * (s.costToRoot / MAX_PATH_COST)), 0, 0);
       //popMatrix();
     }
     for (Small s : terminalNodes) {
