@@ -29,12 +29,10 @@ void initLeafSingle() {
   leaf = new Leaf();
 }
 
-float brightnessGate = 0;
-
 float wait = 0;
 
 void draw() {
-  background(255);
+  background(0);
   PImage depth = kinect.GetMask();
   image(depth, 0, 0, width, height);
   filter(personShader);
@@ -44,15 +42,6 @@ void draw() {
   fill(0); 
   stroke(0);
   text(frameRate, 20, 20);
-  //  text(mouseX+","+mouseY, mouseX, mouseY);
-  if (mousePressed) {
-    float b = brightness(depth.get(
-      (int)map(mouseX, 0, width, 0, depth.width), 
-      (int)map(mouseY, 0, height, 0, depth.height)
-      ));
-    println(b);
-    brightnessGate = b;
-  }
   useLeafMatrix();
 
   depth.loadPixels();
@@ -74,7 +63,7 @@ void draw() {
   //leaf.BASE_DISINCENTIVE = pow(10, map(cos(millis() / 450f), -1, 1, 0, 3));
   //leaf.BASE_DISINCENTIVE = pow(10, map(mouseX, 0, width, 0, 3));
 
-  //leaf.SIDE_ANGLE = map(sin(millis() / 3000f), -1, 1, PI / 6, PI/2);
+  //leaf.SIDE_ANGLE = map(sin(millis() / 300f), -1, 1, PI / 6, PI/2);
   //leaf.SIDE_ANGLE = map(mouseY, 0, height, PI/6, PI/2);
 
   //leaf.SIDEWAYS_COST_RATIO = map(mouseX, 0, width, 0, 1);

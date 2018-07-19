@@ -138,7 +138,7 @@ class Leaf {
    * Anything below 10 basically has no effect. 
    * At 100 basically every leaf becomes ovate, and also increases the number of steps taken.
    */
-  float GROW_FORWARD_FACTOR = 1;
+  float GROW_FORWARD_FACTOR = 0;
 
   /**
    * max 1,
@@ -156,7 +156,7 @@ class Leaf {
    * > 100 = degenerates
    * 
    */
-  float COST_TO_TURN = 0;
+  float COST_TO_TURN = -1;
 
   /**
    * You can set this to false and set the sideways angle between PI/6 and PI/12 to get dichotimous veining.
