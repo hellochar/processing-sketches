@@ -1,8 +1,9 @@
+import java.util.*;
 import kinect4WinSDK.Kinect;
 import kinect4WinSDK.SkeletonData;
 
 Kinect kinect;
-ArrayList <SkeletonData> bodies;
+Map <Integer, SkeletonData> bodies;
 
 void setup()
 {
@@ -10,7 +11,9 @@ void setup()
   background(0);
   kinect = new Kinect(this);
   smooth();
-  bodies = new ArrayList<SkeletonData>();
+  bodies = new HashMap<Integer, SkeletonData>();
+  println(Kinect.NUI_SKELETON_NOT_TRACKED); // 0
+  println(Kinect.NUI_SKELETON_TRACKED); // 2
   setupOsc();
 }
 
@@ -20,11 +23,12 @@ void draw()
   image(kinect.GetImage(), 320, 0, 320, 240);
   image(kinect.GetDepth(), 320, 240, 320, 240);
   image(kinect.GetMask(), 0, 240, 320, 240);
-  for (int i=0; i<bodies.size (); i++) 
+  for (SkeletonData data : bodies.values()) 
   {
-    drawSkeleton(bodies.get(i));
-    drawPosition(bodies.get(i));
+    drawSkeleton(data);
+    drawPosition(data);
   }
+//  oscSendMask(kinect.GetMask());
 }
 
 void drawPosition(SkeletonData _s) 
@@ -129,28 +133,26 @@ void DrawBone(SkeletonData _s, int _j1, int _j2)
 
 void appearEvent(SkeletonData _s) 
 {
+  println("appear event");
+  println(_s.trackingState);
   if (_s.trackingState == Kinect.NUI_SKELETON_NOT_TRACKED) 
   {
     return;
   }
   synchronized(bodies) {
-    bodies.add(_s);
+    bodies.put(_s.dwTrackingID, _s);
   }
-  oscSendBodies(bodies);
+  sanitizeBodies();
+  oscSendBodies(bodies.values());
 }
 
 void disappearEvent(SkeletonData _s) 
 {
   synchronized(bodies) {
-    for (int i=bodies.size ()-1; i>=0; i--) 
-    {
-      if (_s.dwTrackingID == bodies.get(i).dwTrackingID) 
-      {
-        bodies.remove(i);
-      }
-    }
+    bodies.remove(_s.dwTrackingID);
   }
-  oscSendBodies(bodies);
+  sanitizeBodies();
+  oscSendBodies(bodies.values());
 }
 
 void moveEvent(SkeletonData _b, SkeletonData _a) 
@@ -160,14 +162,20 @@ void moveEvent(SkeletonData _b, SkeletonData _a)
     return;
   }
   synchronized(bodies) {
-    for (int i=bodies.size ()-1; i>=0; i--) 
-    {
-      if (_b.dwTrackingID == bodies.get(i).dwTrackingID) 
-      {
-        bodies.get(i).copy(_a);
-        break;
-      }
+    bodies.get(_b.dwTrackingID).copy(_a);
+  }
+  sanitizeBodies();
+  oscSendBodies(bodies.values());
+}
+
+void sanitizeBodies() {
+  Set<SkeletonData> toDelete = new HashSet();
+  for (SkeletonData skeleton : bodies.values()) {
+    if (skeleton.trackingState != Kinect.NUI_SKELETON_TRACKED) {
+      toDelete.add(skeleton);
     }
   }
-  oscSendBodies(bodies);
+  for (SkeletonData s : toDelete) {
+    bodies.remove(s);
+  }
 }

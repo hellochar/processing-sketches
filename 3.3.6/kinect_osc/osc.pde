@@ -31,16 +31,33 @@ final int[] jointOrder = {
   Kinect.NUI_SKELETON_POSITION_WRIST_RIGHT
 };
 
-void oscSendBodies(ArrayList<SkeletonData> bodies) {
+void oscSendBodies(Collection<SkeletonData> bodies) {
   OscMessage msg = new OscMessage("/bodies");
   for (SkeletonData skeleton : bodies) {
+    msg.add(skeleton.dwTrackingID);
+    msg.add(skeleton.trackingState);
+    msg.add(skeleton.position.x);
+    msg.add(skeleton.position.y);
+    msg.add(skeleton.position.z);
     for (int joint : jointOrder) {
       PVector position = skeleton.skeletonPositions[joint];
       int trackingState = skeleton.skeletonPositionTrackingState[joint];
       msg.add(position.x);
       msg.add(position.y);
+      msg.add(position.z);
       msg.add(trackingState);
     }
+  }
+  println("sending", bodies.size(), "bodies");
+  oscP5.send(msg, myRemoteLocation);
+}
+
+void oscSendDepth(PImage depth) {
+  depth.loadPixels();
+  OscMessage msg = new OscMessage("/depth");
+  for (int i = 0; i < depth.pixels.length; i++) {
+    int b = depth.pixels[i] & 0xFF;
+    msg.add(b);
   }
   oscP5.send(msg, myRemoteLocation);
 }
