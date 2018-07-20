@@ -13,11 +13,19 @@ class Leaf {
     root = new Small(new PVector(EXPAND_DIST, 0));
     root.distanceToRoot = 0;
     root.costToRoot = 0;
-    boundary.add(root);
+  }
+  
+  void firstGrow() {
+    for(float y = -140; y <= 140; y += 12) {
+      PVector target = new PVector(3, y);
+      PVector targetOffset = target.copy().sub(root.position);
+      root.maybeAddBranch(targetOffset.copy().normalize(), targetOffset.mag());
+    }
+    boundary.addAll(root.children);
   }
 
   // distance between branches. this kind of controls the fine detail of the leaves.s
-  float TOO_CLOSE_DIST = 2;
+  float TOO_CLOSE_DIST = 1.5;
   /**
    * < 0.5 always degenerates - no branching
    * 0.75 still has some degenerates
@@ -42,7 +50,7 @@ class Leaf {
    * 0 = ellipse
    * 1+ = spear-shaped, linear, subulate
    */
-  float SIDEWAYS_COST_RATIO = -0.2;
+  float SIDEWAYS_COST_RATIO = 0.0;
 
   /* side_angle
    * controls the complexity of the edge and angular look of the inner vein system
@@ -87,7 +95,7 @@ class Leaf {
    * 2-10 creates larger crevases.
    * To get complex boundaries, DEPTH_STEPS_BEFORE_BRANCHING * BRANCH_DEPTH_MOD should be around 10-20.
    */
-  int SECONDARY_BRANCH_PERIOD = 5;
+  int SECONDARY_BRANCH_PERIOD = 2;
 
   /**
    * turn_towards_x_factor
@@ -156,7 +164,7 @@ class Leaf {
    * > 100 = degenerates
    * 
    */
-  float COST_TO_TURN = -1;
+  float COST_TO_TURN = 0;
 
   /**
    * You can set this to false and set the sideways angle between PI/6 and PI/12 to get dichotimous veining.
@@ -234,27 +242,6 @@ class Leaf {
       // disincentivize growing laterally when you're too close to the base - position units
       // this makes nice elliptical shapes
       cost += BASE_DISINCENTIVE * s.position.y * s.position.y * 1 / (1 + s.position.x * s.position.x);
-      
-      // cost += s.closeToMouseness() / 10;
-      
-      PVector screen = s.screenCoordinates();
-      int depthX = (int)map(screen.x, 0, width, 0, depthImage.width);
-      int depthY = (int)map(screen.y, 0, height, 0, depthImage.height);
-      int depthPixelIndex = depthY * depthImage.width + depthX;
-      if (depthPixelIndex >= 0 && depthPixelIndex < depthImage.pixels.length) {
-        float alpha = alpha(depthImage.pixels[depthPixelIndex]);
-        //if (brightness < brightnessGate) {
-        //  brightness = 0;
-        //}
-        //println(alpha);
-        if (alpha == 0) {
-          cost += 20;
-        } else {
-          cost -= 1;
-        }
-        //float value = constrain(map(alpha, 0, 255, 0, 100), 0, 100);
-        //cost += value;
-      }
 
       //Small lastBranch = this;
       //// children.get(0) is usually the forward vein. But we do .get(0) to be adaptable for
@@ -291,6 +278,25 @@ class Leaf {
 
       // incentivize growing in the middle area
       // cost -=
+      
+      PVector screen = s.screenCoordinates();
+      int depthX = (int)map(screen.x, 0, width, 0, depthImage.width);
+      int depthY = (int)map(screen.y, 0, height, 0, depthImage.height);
+      int depthPixelIndex = depthY * depthImage.width + depthX;
+      if (depthPixelIndex >= 0 && depthPixelIndex < depthImage.pixels.length) {
+        float alpha = alpha(depthImage.pixels[depthPixelIndex]);
+        //if (brightness < brightnessGate) {
+        //  brightness = 0;
+        //}
+        //println(alpha);
+        if (alpha == 0) {
+          cost += 20;
+        } else {
+          cost = 0;
+        }
+        //float value = constrain(map(alpha, 0, 255, 0, 100), 0, 100);
+        //cost += value;
+      }
 
       s.costToRoot = this.costToRoot + cost;
     }
@@ -327,7 +333,7 @@ class Leaf {
         return nodes;
       }
       PVector offset = this.offset();
-      float mag = offset.mag();
+      float mag = min(EXPAND_DIST, offset.mag());
       PVector forward = offset.normalize();
 
       if (growForwardBranch || depth % DEPTH_STEPS_BEFORE_BRANCHING != 0) {
@@ -433,11 +439,13 @@ class Leaf {
       boolean isTerminal = false;
       Small nearestNeighbor = nearestCollidableNeighbor(childPosition);
       if (nearestNeighbor != null && nearestNeighbor.position.dist(childPosition) < TOO_CLOSE_DIST) {
+        childPosition.set(nearestNeighbor.position);
+        
         // we're too close! terminate ourselves
         return ReasonStopped.Crowded;
 
         //isTerminal = true;
-        //childPosition.set(nearestNeighbor.position);
+        
       }
 
       Small newSmall = new Small(childPosition);

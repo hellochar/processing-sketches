@@ -21,6 +21,7 @@ void setup() {
   strokeJoin(ROUND);
   kinect = new Kinect(this);
   noiseSeed(0);
+  useLeafMatrix();
   initLeafSingle();
   personShader = loadShader("personShader.glsl");
 }
@@ -36,12 +37,12 @@ void draw() {
   PImage depth = kinect.GetMask();
   image(depth, 0, 0, width, height);
   filter(personShader);
-  textSize(16); 
-  stroke(0);
-  textAlign(LEFT, TOP);
-  fill(0); 
-  stroke(0);
-  text(frameRate, 20, 20);
+  //textSize(16); 
+  //stroke(0);
+  //textAlign(LEFT, TOP);
+  //fill(0); 
+  //stroke(0);
+  //text(frameRate, 20, 20);
   useLeafMatrix();
 
   depth.loadPixels();
@@ -50,14 +51,17 @@ void draw() {
   //  leaf.SECONDARY_BRANCH_PERIOD = max(1, (int)map(mouseY, 0, height, 1, 10));
   //  leaf.DEPTH_STEPS_BEFORE_BRANCHING = max(1, (int)map(mouseX, 0, width, 1, 6));
 
-  if (leaf.finished) {
-    if (wait < 0) {
+  if (leaf == null || leaf.finished) {
+    if (wait <= 0) {
       initLeafSingle();
+      leaf.depthImage = depth;
+      leaf.firstGrow();
       wait = 60;
     } else {
       wait -= 1;
     }
   }
+  //initLeafSingle();
 
   leaf.depthImage = depth;
   //leaf.BASE_DISINCENTIVE = pow(10, map(cos(millis() / 450f), -1, 1, 0, 3));
@@ -79,8 +83,9 @@ void draw() {
   // leaf.SECONDARY_BRANCH_PERIOD = max(1, (int)map(mouseY, 0, height, 1, 10));
   //leaf.DEPTH_STEPS_BEFORE_BRANCHING = 3; // max(1, (int)map(mouseX, 0, width, 1, 6));
   // leaf.COST_TO_TURN = map(mouseX, 0, width, -100, 100);
-
-  leaf.expandBoundary();
+  for(int i = 0; i < 2; i++) {
+    leaf.expandBoundary();
+  }
 
   //println(screenX(0, 0));
   //println(screenY(0, 0));
