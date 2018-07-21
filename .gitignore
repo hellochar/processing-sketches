@@ -1,5 +1,7 @@
 # Don't add libraries/ since it bloats the repo
 */libraries/*/*
+# but add the /library folder which contains dll/jars/etc that are minimally required
+# to run the code
 !*/libraries/*/library
 
 # Don't add modes/ ; we shouldn't touch it and Processing should manage it
