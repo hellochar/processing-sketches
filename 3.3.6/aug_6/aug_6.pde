@@ -18,7 +18,7 @@ class Thing {
   float rx, ry, rz;
   Thing(color f) {
     position = new PVector(random(-1, 1), random(-1, 1), random(-1, 1));
-    //position.mult(10);
+    position.mult(0.1);
     fill = f;
     rx = random(PI);
     ry = random(PI);
@@ -38,27 +38,27 @@ class Thing {
     popMatrix();
   }
 
-  void update() {
-    PVector velHere = velocity(position);
+  void update(float dt) {
+    PVector velHere = velocity(position, dt);
     PVector firstGuess = position.copy().add(velHere);
-    PVector vel = velocity(firstGuess).add(velHere).mult(0.5);
+    PVector vel = velocity(firstGuess, dt).add(velHere).mult(0.5);
     position.add(vel);
     //rx = atan2(vel.y, vel.z);
     //ry = atan2(vel.z, vel.x);
   }
   
-  PVector velocity(PVector l) {
+  PVector velocity(PVector l, float dt) {
     float x = l.x;
     float y = l.y;
     float z = l.z;
-    float r2 = x*x+y*y;
+    float r2 = x*x+y*y + 0.001;
     float d2 = r2 + z*z;
     float r = sqrt(r2);
     float dx = 0; 
     float dy = 0;
     float dz = 0;
     
-    float noiseFreq = 1.3;
+    float noiseFreq = 2;
     // start with arbitrary perlin noise
     dx += (noise(t, y*noiseFreq, z*noiseFreq) - 0.5) * noisePower;
     dy += (noise(x*noiseFreq, t, z*noiseFreq) - 0.5) * noisePower;
@@ -90,9 +90,9 @@ class Thing {
     }
     
     // things are going down too fast.
-    dx *= 0.1;
-    dy *= 0.1;
-    dz *= 0.1;
+    dx *= dt * 30;
+    dy *= dt * 30;
+    dz *= dt * 30;
     return new PVector(dx, dy, dz);
   }
 }
@@ -121,6 +121,11 @@ void setup() {
     }
   }
   //  saveFrame("polyphone2.png");
+  noLoop();
+}
+
+void mousePressed() {
+  loop();
 }
 
 void draw() {
@@ -133,19 +138,26 @@ void draw() {
   //stroke(0, 0, 255);
   //line(0, 0, 0, 0, 0, 100);
   PVector p = new PVector();
-  t = millis() / 2000f;
-  noisePower = pow(5, pow(sin(millis() / 5000f), 10));
+  float dt;
+  if (t < 0.5) {
+    dt = lerp(1 / 2000f, 16 / 2000f, t / 0.5);
+  } else {
+    dt = 16 / 2000f;
+  }
+  println(t);
+  t += dt;
+  noisePower = pow(5, pow(sin(t / 2.5), 10));
   for (Thing t : things) {
-    t.update();
+    t.update(dt);
     p.add(t.position);
   }
   p.mult(1f / things.length);
-  float camDist = width * 0.6;
+  float camDist = width * 0.3;
   camera(camDist * cos(t / 3), camDist * sin(t / 3), (map(sin(t / 3), -1, 1, 0, width) - width/2)*2, p.x * 100, p.y * 100, p.z * 100, 0, 0, -1);
   for (Thing t : things) {
     t.draw();
   }
-  f.set("time", millis() / 1000f);
+  f.set("time", t);
   filter(f);
 }
 
