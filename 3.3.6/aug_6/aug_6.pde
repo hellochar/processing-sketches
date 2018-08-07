@@ -1,3 +1,5 @@
+import java.util.*;
+
 PShader f;
 color[] colorTheme = new color[] {#011A27, #063852, #F0810F, #E6DF44}; // polyphone
 // color[] colorTheme = new color[] {#021C1E, #004445, #2C7873, #6FB98F};
@@ -6,6 +8,9 @@ color[] colorTheme = new color[] {#011A27, #063852, #F0810F, #E6DF44}; // polyph
 // color[] colorTheme = new color[] {#1E1F26, #283655, #486824, #4897D8}; // polyphone 3
 
 float t = 0;
+float noisePower;
+
+Set<Character> keys = new HashSet();
 
 class Thing {
   PVector position;
@@ -38,18 +43,8 @@ class Thing {
     PVector firstGuess = position.copy().add(velHere);
     PVector vel = velocity(firstGuess).add(velHere).mult(0.5);
     position.add(vel);
-    //position.x += dx;
-    //position.y += dy;
-    //position.z += dz;
-    //x *= 0.95;
-    //y *= 0.95;
-    //z *= 0.95;
-    rx = atan2(vel.y, vel.z);
-    ry = atan2(vel.z, vel.x);
-    //float pullAmount = map(pow(sin(millis() / 4000f), 3), -1, 1, 0.92, 1 / 0.95);
-    //x *= pullAmount;
-    //y *= pullAmount;
-    //z *= pullAmount;
+    //rx = atan2(vel.y, vel.z);
+    //ry = atan2(vel.z, vel.x);
   }
   
   PVector velocity(PVector l) {
@@ -59,49 +54,49 @@ class Thing {
     float r2 = x*x+y*y;
     float d2 = r2 + z*z;
     float r = sqrt(r2);
-    float d = sqrt(d2);
     float dx = 0; 
     float dy = 0;
     float dz = 0;
     
+    float noiseFreq = 1.3;
     // start with arbitrary perlin noise
-    dx += (noise(t, y, z) - 0.5) * 1;
-    dy += (noise(x, t, z) - 0.5) * 1;
-    dz += (noise(x, y, t) - 0.5) * 1;
-    
-    float p = pow(5, pow(sin(millis() / 10000f), 10));
-    dx *= p;
-    dx *= p;
-    dx *= p;
+    dx += (noise(t, y*noiseFreq, z*noiseFreq) - 0.5) * noisePower;
+    dy += (noise(x*noiseFreq, t, z*noiseFreq) - 0.5) * noisePower;
+    dz += (noise(x*noiseFreq, y*noiseFreq, t) - 0.5) * noisePower;
     
     // on all - shrink towards 0 with order |r|^3
-    dx -= x / d * d2 * d * 0.0002;
-    dy -= y / d * d2 * d * 0.0002;
-    dz -= z / d * d2 * d * 0.0002;
+    dx -= x * d2 * 0.0002;
+    dy -= y * d2 * 0.0002;
+    dz -= z * d2 * 0.0002;
     
     // on xy - shrink towards 0 with order 1/|z|^2
     dx -= x / r * 1 / (0.1 + z*z);
     dy -= y / r * 1 / (0.1 + z*z);
     
-    // on xy - expand outward with order |r|*|z|. That is, when sufficiently tall, start expanding outwards
-    dx += x / r * r * z * 0.01;
-    dy += y / r * r * z * 0.01;
+    if (!keys.contains('1')) {
+      // on xy - expand outward with order |r|^2*|z|. That is, when sufficiently tall, start expanding outwards
+      dx += x / r2 * z * 0.1;
+      dy += y / r2 * z * 0.1;
+    }
     
-    //// on z - go up with order 1/|r|^2. When shrunken, go up.
-    dz += 1 / (1 + r2) * 10;
+    if (!keys.contains('2')) {
+      // on z - go up with order 1/|r|^2. When shrunken, go up.
+      dz += 1 / (1 + r2) * 1;
+    }
     
-    // on z - go down with order |z|*|r|^2. When expanded and tall, go down.
-    dz -= r2*z * 0.01;
+    if (!keys.contains('3')) {
+      // on z - go down with order |z|*|r|^2. When expanded and tall, go down.
+      dz -= r2*z * 0.01;
+    }
     
     // things are going down too fast.
-    
     dx *= 0.1;
     dy *= 0.1;
     dz *= 0.1;
     return new PVector(dx, dy, dz);
   }
 }
-Thing[] things = new Thing[5000];
+Thing[] things = new Thing[3000];
 PGraphics bg;
 
 void setup() {
@@ -139,15 +134,25 @@ void draw() {
   //line(0, 0, 0, 0, 0, 100);
   PVector p = new PVector();
   t = millis() / 2000f;
+  noisePower = pow(5, pow(sin(millis() / 5000f), 10));
   for (Thing t : things) {
     t.update();
     p.add(t.position);
   }
   p.mult(1f / things.length);
-  camera(width/2, height/2, (mouseX - width/2)*10, p.x * 100, p.y * 100, p.z * 100, 0, 0, -1);
+  float camDist = width * 0.6;
+  camera(camDist * cos(t / 3), camDist * sin(t / 3), (map(sin(t / 3), -1, 1, 0, width) - width/2)*2, p.x * 100, p.y * 100, p.z * 100, 0, 0, -1);
   for (Thing t : things) {
     t.draw();
   }
   f.set("time", millis() / 1000f);
   filter(f);
+}
+
+void keyPressed() {
+  keys.add(key);
+}
+
+void keyReleased() {
+  keys.remove(key);
 }
