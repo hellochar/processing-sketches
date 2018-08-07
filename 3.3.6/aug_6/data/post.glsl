@@ -79,8 +79,8 @@ vec3 chromaticAbberation() {
     const int num_iter = 12;
     const float reci_num_iter_f = 1.0 / float(num_iter);
 
-    // vec2 uv=(vertTexCoord.xy*.5)+.25;
-    vec2 uv = vertTexCoord.xy;
+    vec2 uv=(vertTexCoord.xy*.5)+.25;
+    // vec2 uv = vertTexCoord.xy;
 
     vec4 sumcol = vec4(0.0);
     vec4 sumw = vec4(0.0);
@@ -114,7 +114,6 @@ void main(void) {
 
     // tonemapping
     totalColor = tonemapFilmic(totalColor);
-
 
     gl_FragColor = vec4(totalColor, 1.0);
 }
