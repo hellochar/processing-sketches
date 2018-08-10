@@ -8,9 +8,11 @@ class Flock {
   }
 
   void run() {
+    //beginShape(LINES);
     for (Boid b : boids) {
       b.run(boids);  // Passing the entire list of boids to each boid individually
     }
+    //endShape();
   }
 
   void addBoid(Boid b) {

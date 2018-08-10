@@ -26,8 +26,10 @@ class Boid {
   }
 
   void run(ArrayList<Boid> boids) {
+    //vertex(position.x, position.y);
     flock(boids);
     update();
+    //vertex(position.x, position.y);
     borders();
     render();
   }
@@ -42,11 +44,12 @@ class Boid {
     PVector sep = separate(boids);   // Separation
     PVector ali = align(boids);      // Alignment
     PVector coh = cohesion(boids);   // Cohesion
-    PVector avoid = avoid(toAvoid);
+    PVector avoid = avoid(toAvoid).limit(maxforce);
     // Arbitrarily weight these forces
     sep.mult(1.5);
     ali.mult(1.0);
     coh.mult(1.0);
+    avoid.mult(3.0);
     // Add the force vectors to acceleration
     applyForce(sep);
     applyForce(ali);
@@ -75,7 +78,8 @@ class Boid {
     boolean hasBarrierNeg = brightnessNeg < 1;
     if (hasBarrierPos && hasBarrierNeg) {
       // it looks too dangerous to proceed. Try slowing down.
-      return velocity.copy().mult(-1);
+      // return velocity.copy().mult(-0.1);
+      return new PVector();
     } else if (hasBarrierPos && !hasBarrierNeg) {
       // avoid positive, turn negative
       return velocity.copy().rotate(-PI/2);

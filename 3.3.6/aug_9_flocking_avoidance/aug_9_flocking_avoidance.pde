@@ -20,10 +20,11 @@ void setup() {
     flock.addBoid(new Boid(width/2,height/2));
   }
   toAvoid = createGraphics(width, height);
+  background(220);
 }
 
 void draw() {
-  background(192);
+//  background(192);
   toAvoid.beginDraw();
   toAvoid.background(0);
   toAvoid.noStroke();
@@ -33,7 +34,10 @@ void draw() {
   toAvoid.ellipse(mouseX, mouseY, 300, 300);
   toAvoid.endDraw();
   image(toAvoid, 0, 0);
-  flock.run();
+  //stroke(0, 2);
+  //for (int i = 0; i < 10; i++) {
+    flock.run();
+  //}
 }
 
 // Add a new boid into the System
