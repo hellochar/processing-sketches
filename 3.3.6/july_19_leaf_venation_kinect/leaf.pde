@@ -16,8 +16,8 @@ class Leaf {
   }
   
   void firstGrow() {
-    for(float y = -140; y <= 140; y += 12) {
-      PVector target = new PVector(3, y);
+    for(float y = -12; y <= 12; y += 12) {
+      PVector target = new PVector(30, y);
       PVector targetOffset = target.copy().sub(root.position);
       root.maybeAddBranch(targetOffset.copy().normalize(), targetOffset.mag());
     }
@@ -42,7 +42,7 @@ class Leaf {
    * Linear scalar of how big the plant grows; good numbers are 100 to 1000.
    * For high fidelity, pump this up to like 5000
    */
-  float MAX_PATH_COST = 300;
+  float MAX_PATH_COST = 100;
   /* sideways_cost_ratio
    * Powerful number that controls how fat the leaf grows.
    * -1 = obovate, truncate, obcordate
@@ -118,7 +118,7 @@ class Leaf {
    */
   float AVOID_NEIGHBOR_FORCE = 1;
 
-  float randWiggle = 0.0;
+  float randWiggle = 0.01;
 
   /* base_disincentive
    * 0 to 1, 10, 100, and 1000 all produce interesting changes
@@ -146,7 +146,7 @@ class Leaf {
    * Anything below 10 basically has no effect. 
    * At 100 basically every leaf becomes ovate, and also increases the number of steps taken.
    */
-  float GROW_FORWARD_FACTOR = 0;
+  float GROW_FORWARD_FACTOR = 100;
 
   /**
    * max 1,
@@ -289,11 +289,11 @@ class Leaf {
         //  brightness = 0;
         //}
         //println(alpha);
-        if (alpha == 0) {
-          cost += 20;
-        } else {
-          cost = 0;
-        }
+        //if (alpha == 0) {
+        //  cost += 20;
+        //} else {
+        //  cost = 0;
+        //}
         //float value = constrain(map(alpha, 0, 255, 0, 100), 0, 100);
         //cost += value;
       }
@@ -535,10 +535,11 @@ class Leaf {
     // computes whole subtree
     root.computeWeight();
     color gray = #397a4c;
-    color green = #808080;
+    color green = #89da59;
     for (Small s : world) {
       strokeWeight(log(1 + s.weight) / 4);
-      stroke(lerpColor(gray, green, s.costToRoot / MAX_PATH_COST));
+       stroke(lerpColor(gray, green, s.costToRoot / MAX_PATH_COST), 128);
+      //stroke(green, 128);
       s.draw();
       
       //PVector sc = s.screenCoordinates();
@@ -559,7 +560,7 @@ class Leaf {
     for (Small s : terminalNodes) {
       if (s.reason == ReasonStopped.Expensive) {
         strokeWeight(1.3);
-        stroke(#77c063);
+        stroke(#f0810f, 128);
         s.draw();
       }
     }
@@ -574,27 +575,5 @@ class Leaf {
   //   terminal nodes who are terminal because it was too expensive.size < 10 
   boolean isDegenerate() {
     return terminalNodes.size() < 10;
-  }
-
-  void drawBoundary() {
-    stroke(64, 255, 64);
-    strokeWeight(0.5);
-    noFill();
-    beginShape();
-    // vertex(root.position.x, root.position.y);
-    Collections.sort(terminalNodes, new Comparator() {
-      public int compare(Object obj1, Object obj2) {
-        Small s1 = (Small)obj1;
-        Small s2 = (Small)obj2;
-        return Float.compare(atan2(s1.position.y, s1.position.x), atan2(s2.position.y, s2.position.x));
-      }
-    }
-    );
-    for (Small s : terminalNodes) {
-      if (s.reason == ReasonStopped.Expensive) {
-        vertex(s.position.x, s.position.y);
-      }
-    }
-    endShape();
   }
 }

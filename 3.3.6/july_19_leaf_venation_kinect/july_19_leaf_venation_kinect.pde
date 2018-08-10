@@ -11,12 +11,14 @@ enum ReasonStopped {
 Leaf leaf;
 
 PShader personShader;
+PShader post;
 
 void setup() {
   //  fullScreen();
-  size(2400, 1350, P2D);
-  pixelDensity(1);
-  smooth();
+  //size(2400, 1350, P2D);
+  size(1920, 1080, P2D);
+  //pixelDensity(1);
+  smooth(8);
   strokeCap(ROUND);
   strokeJoin(ROUND);
   kinect = new Kinect(this);
@@ -24,6 +26,7 @@ void setup() {
   useLeafMatrix();
   initLeafSingle();
   personShader = loadShader("personShader.glsl");
+  post = loadShader("post.glsl");
 }
 
 void initLeafSingle() {
@@ -111,6 +114,9 @@ void draw() {
   //textAlign(LEFT, TOP);
   //textSize(20);
   //text(leaf.COST_TO_TURN, 0, 0);
+  
+  post.set("time", millis() / 1000f);
+  filter(post);
 }
 
 PMatrix2D mat;
