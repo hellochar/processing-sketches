@@ -8,51 +8,37 @@ precision highp float;
 
 uniform float time;
 uniform vec2 mouse;
-uniform vec2 resolution;
 uniform sampler2D texture; // previous pixels
 uniform sampler2D source;
-
-vec4 live = vec4(0.5,1.0,0.7,1.);
-vec4 dead = vec4(0.,0.,0.,1.);
-vec4 blue = vec4(0.,0.,1.,1.);
+uniform vec2 texOffset;
+varying vec4 vertTexCoord;
 
 void main( void ) {
-    vec2 position = ( gl_FragCoord.xy / resolution.xy );
-    vec2 pixel = 1./resolution;
-
-    if (length(position-mouse) < 0.01) {
-        float rnd1 = mod(fract(sin(dot(position + time * 0.001, vec2(14.9898,78.233))) * 43758.5453), 1.0);
-        if (rnd1 > 0.5) {
-            gl_FragColor = live;
-        } else {
-            gl_FragColor = blue;
-        }
+    vec2 uv = vertTexCoord.st;
+    vec4 sourcePixel = texture2D(source, uv);
+    if (length(sourcePixel.rgb) > 0.) {
+        gl_FragColor = sourcePixel;
     } else {
-        float sum = 0.;
-        sum += texture2D(texture, position + pixel * vec2(-1., -1.)).g;
-        sum += texture2D(texture, position + pixel * vec2(-1., 0.)).g;
-        sum += texture2D(texture, position + pixel * vec2(-1., 1.)).g;
-        sum += texture2D(texture, position + pixel * vec2(1., -1.)).g;
-        sum += texture2D(texture, position + pixel * vec2(1., 0.)).g;
-        sum += texture2D(texture, position + pixel * vec2(1., 1.)).g;
-        sum += texture2D(texture, position + pixel * vec2(0., -1.)).g;
-        sum += texture2D(texture, position + pixel * vec2(0., 1.)).g;
-        vec4 me = texture2D(texture, position) + texture2D(source, position);
+        // so, we want to compute the new sdf value. We have:
+        // texture, the previous values
+        // we're just max of me and (my neighbors - 1)
+        vec4 left = texture2D(texture, uv + texOffset * vec2(-1., 0.));
+        vec4 right = texture2D(texture, uv + texOffset * vec2(1., 0.));
+        vec4 down = texture2D(texture, uv + texOffset * vec2(0., -1.));
+        vec4 up = texture2D(texture, uv + texOffset * vec2(0., 1.));
+        // max = max(max, texture2D(texture, uv + texOffset * vec2(-1., -1.)).g);
+        // max = max(max, texture2D(texture, uv + texOffset * vec2(-1., 1.)).g);
+        // max = max(max, texture2D(texture, uv + texOffset * vec2(1., -1.)).g);
+        // max = max(max, texture2D(texture, uv + texOffset * vec2(1., 1.)).g);
+        vec4 me = texture2D(texture, uv);
 
-        if (me.g <= 0.1) {
-            if ((sum >= 2.9) && (sum <= 3.1)) {
-                gl_FragColor = live;
-            } else if (me.b > 0.004) {
-                gl_FragColor = vec4(0., 0., max(me.b - 0.004, 0.25), 0.);
-            } else {
-                gl_FragColor = dead;
-            }
-        } else {
-            if ((sum >= 1.9) && (sum <= 3.1)) {
-                gl_FragColor = live;
-            } else {
-                gl_FragColor = blue;
-            }
-        }
+        float s = 1. / 255.;
+        float newValue = me.r - s;
+        newValue = max(newValue, left.r - s);
+        newValue = max(newValue, right.r - s);
+        newValue = max(newValue, down.r - s);
+        newValue = max(newValue, up.r - s);
+
+        gl_FragColor = vec4(vec3(newValue), 1.);
     }
 }

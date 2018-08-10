@@ -17,6 +17,8 @@ PShader sdfSolver;
 void setup() {
   size(800, 600, P2D);
   source = createGraphics(width, height, P2D);
+  source.noSmooth();
+
   sdf = createGraphics(width, height, P2D);
   sdf.noSmooth();
   sdf.beginDraw();
@@ -27,21 +29,28 @@ void setup() {
 
 void draw() {
   source.beginDraw();
-  source.background(0);
+  source.background(0, 0);
   source.fill(255);
+  //source.colorMode(HSB);
+  //source.fill(frameCount % 255, 255, 255);
   source.noStroke();
   source.ellipse(mouseX, mouseY, 150, 150);
   source.endDraw();
-  
+
   sdfSolver.set("time", millis() / 1000f);
   sdfSolver.set("mouse", float(mouseX) / width, float(mouseY) / height);
   sdfSolver.set("resolution", float(width), float(height));
   sdfSolver.set("source", source);
   sdf.beginDraw();
-  sdf.filter(sdfSolver);
-  //sdf.rect(0, 0, sdf.width, sdf.height);
+  for (int i = 0; i < 100; i++) {
+    sdf.filter(sdfSolver);
+  }
   sdf.endDraw();
-  
+
   // image(source, 0, 0);
   image(sdf, 0, 0);
+  fill(255);
+  stroke(0);
+  textAlign(LEFT, TOP);
+  text(frameRate, 0, 0);
 }
