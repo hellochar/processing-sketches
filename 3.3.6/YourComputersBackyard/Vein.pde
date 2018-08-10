@@ -104,28 +104,19 @@ class Vein {
 
     // incentivize middle distances to the root
     // cost -= 1000 / (1 + exp(pow(50 - s.distanceToRoot, 2) / 100));
-
-
-    // incentivize growing in the middle area
-    // cost -=
+    
+    // drought outside user skeleton area
+    cost += 20;
 
     PVector screen = s.screenCoordinates();
     int depthX = (int)map(screen.x, 0, width, 0, depthImage.width);
     int depthY = (int)map(screen.y, 0, height, 0, depthImage.height);
     int depthPixelIndex = depthY * depthImage.width + depthX;
     if (depthPixelIndex >= 0 && depthPixelIndex < depthImage.pixels.length) {
-      float alpha = alpha(depthImage.pixels[depthPixelIndex]);
-      //if (brightness < brightnessGate) {
-      //  brightness = 0;
-      //}
-      //println(alpha);
-      //if (alpha == 0) {
-      //  cost += 20;
-      //} else {
-      //  cost = 0;
-      //}
-      //float value = constrain(map(alpha, 0, 255, 0, 100), 0, 100);
-      //cost += value;
+      float alpha = brightness(depthImage.pixels[depthPixelIndex]);
+      if (alpha < 255) {
+        cost = 0;
+      }
     }
 
     s.costToRoot = this.costToRoot + cost;
