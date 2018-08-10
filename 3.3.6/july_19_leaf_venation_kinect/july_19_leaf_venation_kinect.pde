@@ -89,6 +89,7 @@ void draw() {
   for(int i = 0; i < 2; i++) {
     leaf.expandBoundary();
   }
+//  leaf.update();
 
   //println(screenX(0, 0));
   //println(screenY(0, 0));

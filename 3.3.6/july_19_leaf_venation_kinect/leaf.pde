@@ -6,7 +6,7 @@ class Leaf {
   List<Small> boundary = new ArrayList();
   // nodes without any children
   List<Small> terminalNodes = new ArrayList();
-  
+
   PImage depthImage;
 
   Leaf() {
@@ -14,9 +14,10 @@ class Leaf {
     root.distanceToRoot = 0;
     root.costToRoot = 0;
   }
-  
+
   void firstGrow() {
-    for(float y = -12; y <= 12; y += 12) {
+    //for (float y = -140; y <= 140; y += 12) {
+    for (float y = -12; y <= 12; y += 12) {
       PVector target = new PVector(30, y);
       PVector targetOffset = target.copy().sub(root.position);
       root.maybeAddBranch(targetOffset.copy().normalize(), targetOffset.mag());
@@ -118,7 +119,7 @@ class Leaf {
    */
   float AVOID_NEIGHBOR_FORCE = 1;
 
-  float randWiggle = 0.01;
+  float randWiggle = 0.0;
 
   /* base_disincentive
    * 0 to 1, 10, 100, and 1000 all produce interesting changes
@@ -146,13 +147,13 @@ class Leaf {
    * Anything below 10 basically has no effect. 
    * At 100 basically every leaf becomes ovate, and also increases the number of steps taken.
    */
-  float GROW_FORWARD_FACTOR = 100;
+  float GROW_FORWARD_FACTOR = 0;
 
   /**
    * max 1,
    * below 0.7 it starts degenerating
    */
-  float SECONDARY_BRANCH_SCALAR = 0.85;
+  float SECONDARY_BRANCH_SCALAR = 1.0;
 
   /**
    * Can help define a more jagged/deeper edge.
@@ -188,15 +189,19 @@ class Leaf {
     // on the path to root, the number of turns you have to make
     int numTurns = 0;
     boolean isTerminal = false;
+    PVector _offset;
 
     Small(PVector pos) {
       this.position = pos;
       this.children = new LinkedList();
+      this._offset = this.position.copy();
       world.add(this);
     }
 
     void add(Small s) {
       s.parent = this;
+      s._offset = s.position.copy().sub(this.position);
+
       s.depth = this.depth + 1;
       // consider first child the "straight" child
       boolean isTurn = true;
@@ -278,7 +283,7 @@ class Leaf {
 
       // incentivize growing in the middle area
       // cost -=
-      
+
       PVector screen = s.screenCoordinates();
       int depthX = (int)map(screen.x, 0, width, 0, depthImage.width);
       int depthY = (int)map(screen.y, 0, height, 0, depthImage.height);
@@ -300,13 +305,13 @@ class Leaf {
 
       s.costToRoot = this.costToRoot + cost;
     }
-    
+
     PVector screenCoordinates() {
       float screenX = leafToScreenX(position.x, position.y);
       float screenY = leafToScreenY(position.x, position.y);
       return new PVector(screenX, screenY);
     }
-    
+
     float closeToMouseness() { 
       if (screenCoordinates().dist(new PVector(mouseX, mouseY)) < 50) {
         return 1000;
@@ -315,12 +320,23 @@ class Leaf {
       }
     }
 
-    PVector offset() {
+    void update() {
+      this._offset.rotate(sin(millis() / 500f + PI/2) * 0.001 * depth);
+    }
+
+    void computePositions() {
+      // based off offsets
       if (this.parent != null) {
-        return this.position.copy().sub(this.parent.position);
-      } else {
-        return this.position.copy();
+        this.position.set(this.parent.position);
+        this.position.add(this._offset);
       }
+      for (Small s : children) {
+        s.computePositions();
+      }
+    }
+
+    PVector offset() {
+      return this._offset.copy();
     }
 
     ReasonStopped reason;
@@ -440,12 +456,11 @@ class Leaf {
       Small nearestNeighbor = nearestCollidableNeighbor(childPosition);
       if (nearestNeighbor != null && nearestNeighbor.position.dist(childPosition) < TOO_CLOSE_DIST) {
         childPosition.set(nearestNeighbor.position);
-        
+
         // we're too close! terminate ourselves
         return ReasonStopped.Crowded;
 
         //isTerminal = true;
-        
       }
 
       Small newSmall = new Small(childPosition);
@@ -457,7 +472,7 @@ class Leaf {
     void draw() {
       if (this.parent != null) {
         //vertex(this.parent.position.x, this.parent.position.y);
-         line(this.parent.position.x, this.parent.position.y, this.position.x, this.position.y);
+        line(this.parent.position.x, this.parent.position.y, this.position.x, this.position.y);
       } else {
         //vertex(0, 0);
         line(0, 0, this.position.x, this.position.y);
@@ -538,10 +553,10 @@ class Leaf {
     color green = #89da59;
     for (Small s : world) {
       strokeWeight(log(1 + s.weight) / 4);
-       stroke(lerpColor(gray, green, s.costToRoot / MAX_PATH_COST), 128);
+      stroke(lerpColor(gray, green, s.costToRoot / MAX_PATH_COST), 128);
       //stroke(green, 128);
       s.draw();
-      
+
       //PVector sc = s.screenCoordinates();
       //textSize(2);
       //pushMatrix();
@@ -566,6 +581,13 @@ class Leaf {
     }
 
     // drawBoundary();
+  }
+
+  void update() {
+    for (Small s : world) {
+      s.update();
+    }
+    root.computePositions();
   }
 
   // degenerate:
