@@ -11,6 +11,9 @@ uniform vec2 texOffset;
 varying vec4 vertColor;
 varying vec4 vertTexCoord;
 
+const vec3 darkgray = vec3(1., 26., 39.) / 255.;
+const vec3 darkblue = vec3(6., 56., 82.) / 255.;
+
 void main(void) {
   // Grouping texcoord variables in order to make it work in the GMA 950. See post #13
   // in this thread:
@@ -37,9 +40,6 @@ void main(void) {
 
   vec4 sum = (8.0 * col4 - (col0 + col1 + col2 + col3 + col5 + col6 + col7 + col8)) * 4.;
 
-  vec3 colorGround = vec3(1., 26., 39.) / 255.;
-  if (vertTexCoord.t < 0.25) {
-      colorGround = mix(colorGround, vec3(6., 56., 82.) / 255., 1. - pow(vertTexCoord.t / 0.25, 2.));
-  }
+  vec3 colorGround = pow(mix(darkgray, darkblue, clamp(1. - pow(vertTexCoord.t / 0.25, 2.), 0., 1.)), vec3(2.2));
   gl_FragColor = vec4(sum.rgb, 1.0) * vertColor + vec4(colorGround, 1.);
 }

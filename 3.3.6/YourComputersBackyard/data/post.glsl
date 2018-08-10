@@ -75,11 +75,11 @@ vec4 spectrum_offset( float t ) {
 }
 
 vec3 chromaticAbberation() {
-    const float max_distort = 2.2;
+    const float max_distort = 0.2;
     const int num_iter = 12;
     const float reci_num_iter_f = 1.0 / float(num_iter);
 
-    vec2 uv=(vertTexCoord.xy*.8)+.1;
+    vec2 uv=(vertTexCoord.xy*.9)+.05;
     // vec2 uv = vertTexCoord.xy;
 
     vec4 sumcol = vec4(0.0);
@@ -110,10 +110,10 @@ void main(void) {
     totalColor = mix(totalColor, totalColor * vignetteAmount, 0.5);
 
     // noise
-    totalColor += 0.05 * random(vertTexCoord.xy, 1 + time * 0.001);
+    totalColor += 0.02 * random(vertTexCoord.xy, 1 + time * 0.001);
 
     // tonemapping
-    totalColor = acesFilm(totalColor);
+    totalColor = tonemapFilmic(totalColor);
 
     gl_FragColor = vec4(totalColor, 1.0);
 }

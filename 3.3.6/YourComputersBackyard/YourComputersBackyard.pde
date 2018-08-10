@@ -1,4 +1,3 @@
-
 import java.util.*;
 import KinectPV2.*;
 
@@ -12,6 +11,8 @@ Leaf leaf;
 
 PShader personShader;
 PShader post;
+
+PImage depthImage;
 
 void setup() {
   //  fullScreen();
@@ -42,23 +43,21 @@ float wait = 0;
 
 void draw() {
   background(0);
-  PImage depth = kinect.getBodyTrackImage();
-  image(depth, 0, 0, width, height);
+  depthImage = kinect.getBodyTrackImage();
+  image(depthImage, 0, 0, width, height);
   filter(personShader);
   useLeafMatrix();
 
-  depth.loadPixels();
+  depthImage.loadPixels();
   if (leaf == null || leaf.finished) {
     if (wait <= 0) {
       initLeafSingle();
-      leaf.depthImage = depth;
       leaf.firstGrow();
       wait = 60;
     } else {
       wait -= 1;
     }
   }
-  leaf.depthImage = depth;
   for(int i = 0; i < 2; i++) {
     leaf.expandBoundary();
   }
@@ -68,6 +67,7 @@ void draw() {
   post.set("time", millis() / 1000f);
   filter(post);
 
+  resetMatrix();
   fill(255);
   textAlign(LEFT, TOP);
   textSize(20);

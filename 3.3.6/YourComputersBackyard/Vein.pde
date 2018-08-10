@@ -15,12 +15,14 @@ class Vein {
   int numTurns = 0;
   boolean isTerminal = false;
   PVector _offset;
+  Leaf leaf;
 
-  Vein(PVector pos) {
+  Vein(Leaf leaf, PVector pos) {
+    this.leaf = leaf;
     this.position = pos;
     this.children = new LinkedList();
     this._offset = this.position.copy();
-    world.add(this);
+    leaf.world.add(this);
   }
 
   void add(Vein s) {
@@ -73,7 +75,7 @@ class Vein {
     // this makes nice elliptical shapes
     cost += BASE_DISINCENTIVE * s.position.y * s.position.y * 1 / (1 + s.position.x * s.position.x);
 
-    //Small lastBranch = this;
+    //Vein lastBranch = this;
     //// children.get(0) is usually the forward vein. But we do .get(0) to be adaptable for
     //// other cases (not-always-growing-forward, or forward vein is blocked)
     //// keep going backwards until you hit a turn.
@@ -198,12 +200,12 @@ class Vein {
   }
 
   /**
-   * Get the non-immediate-family Small nearest to the point.
+   * Get the non-immediate-family Vein nearest to the point.
    */
   Vein nearestCollidableNeighbor(PVector point) {
     Vein nearestNeighbor = null;
     float nearestNeighborDist = 1e10;
-    for (Vein s : world) {
+    for (Vein s : leaf.world) {
       if (isImmediateFamily(s)) {
         continue;
       }
@@ -240,7 +242,7 @@ class Vein {
     PVector offset = heading.copy().mult(mag);
     PVector position = this.position.copy().add(offset);
     PVector force = new PVector();
-    for (Vein s : boundary) {
+    for (Vein s : leaf.boundary) {
       if (isImmediateFamily(s) || isAncestor(s)) {
         continue;
       }
@@ -279,9 +281,9 @@ class Vein {
       //isTerminal = true;
     }
 
-    Vein newSmall = new Vein(childPosition);
-    newSmall.isTerminal = isTerminal;
-    this.add(newSmall);
+    Vein newVein = new Vein(leaf, childPosition);
+    newVein.isTerminal = isTerminal;
+    this.add(newVein);
     return null;
   }
 
