@@ -66,10 +66,21 @@ class Boid {
   }
   
   PVector avoid(PGraphics toAvoid) {
-    PVector futurePosition = position.copy().add(velocity.copy().mult(15));
-    float brightness = brightness(toAvoid.get(round(futurePosition.x), round(futurePosition.y)));
-    if (brightness < 1) {
-      // oh crap there's something in our path, just go downwards
+    PVector futurePositionPos = position.copy().add(velocity.copy().rotate(PI/8).mult(15));
+    PVector futurePositionNeg = position.copy().add(velocity.copy().rotate(-PI/8).mult(15));
+    float brightnessPos = brightness(toAvoid.get(round(futurePositionPos.x), round(futurePositionPos.y)));
+    float brightnessNeg = brightness(toAvoid.get(round(futurePositionNeg.x), round(futurePositionNeg.y)));
+    
+    boolean hasBarrierPos = brightnessPos < 1;
+    boolean hasBarrierNeg = brightnessNeg < 1;
+    if (hasBarrierPos && hasBarrierNeg) {
+      // it looks too dangerous to proceed. Try slowing down.
+      return velocity.copy().mult(-1);
+    } else if (hasBarrierPos && !hasBarrierNeg) {
+      // avoid positive, turn negative
+      return velocity.copy().rotate(-PI/2);
+    } else if (!hasBarrierPos && hasBarrierNeg) {
+      // avoid negative, turn positive
       return velocity.copy().rotate(PI/2);
     } else {
       return new PVector();
