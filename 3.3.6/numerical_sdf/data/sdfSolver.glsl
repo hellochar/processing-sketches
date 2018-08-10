@@ -89,6 +89,10 @@ float snoise(vec3 v){
                                 dot(p2,x2), dot(p3,x3) ) );
 }
 
+float sigmoid(float x) {
+    return 1. / (1. + exp(-x * 6.));
+}
+
 void main( void ) {
     vec2 uv = vertTexCoord.st;
     vec4 sourcePixel = texture2D(source, uv);
@@ -98,11 +102,18 @@ void main( void ) {
         // so, we want to compute the new sdf value. We have:
         // texture, the previous values
         // we're just max of me and (my neighbors - 1)
-        vec3 s = vec3(1. / 255.);
+
+        // at the center, d = 0
+        // at the edge, d = 0.717
+        float d = length(uv - (vec2(sin(time), cos(time)) * 0.5 + 0.5)) / 2.;
+        /* float d = length(uv - vec2(0.5)); */
+        vec2 noiseUv = uv * 200 * (1. - d);
+        vec3 s = vec3(1. / 255.) * sigmoid(snoise(vec3(noiseUv, time)));
+        s *= 1. + d * 30.;
         vec3 s2 = s * sqrt(2.);
 
         vec4 me = texture2D(texture, uv);
-        vec3 newValue = me.rgb;
+        vec3 newValue = me.rgb - s; // + (snoise(vec3(uv * 10., time))) * 0.01;
 
         if (diags) {
             vec4 ld = texture2D(texture, uv + texOffset * vec2(-1., -1.));

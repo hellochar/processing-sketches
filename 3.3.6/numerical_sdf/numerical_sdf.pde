@@ -14,8 +14,10 @@ PGraphics sdf;
 
 PShader sdfSolver;
 
+PShader post;
+
 void setup() {
-  size(displayWidth, displayHeight, P2D);
+  size(1280, 800, P2D);
   source = createGraphics(width, height, P2D);
   source.noSmooth();
 
@@ -25,19 +27,21 @@ void setup() {
   sdf.background(0);
   sdf.endDraw();
   sdfSolver = loadShader("sdfSolver.glsl");
+  
+  post = loadShader("post.glsl");
 }
 
 void draw() {
   source.beginDraw();
   source.background(0, 0);
   source.colorMode(HSB);
-  if (false) {
-    source.fill(255);
+  colorMode(HSB);
+  int c = color(frameCount % 255, 255, 255);
+  if (mousePressed) {
+    source.fill(c);
     source.noStroke();
     source.ellipse(mouseX, mouseY, 5, 5);
-  }
-  if (true) {
-    source.stroke(255);
+    source.stroke(c);
     source.line(mouseX, mouseY, pmouseX, pmouseY);
   }
   source.endDraw();
@@ -47,16 +51,17 @@ void draw() {
   sdfSolver.set("resolution", float(width), float(height));
   sdfSolver.set("source", source);
   sdf.beginDraw();
-  for (int i = 0; i < 100; i++) {
+  for (int i = 0; i < 10; i++) {
     sdfSolver.set("diags", i % 2 == 0);
     sdf.filter(sdfSolver);
   }
   sdf.endDraw();
 
-  // image(source, 0, 0);
   image(sdf, 0, 0);
+  //filter(post);
 
   fill(0);
   textAlign(LEFT, TOP);
   text(frameRate, 0, 0);
+
 }
