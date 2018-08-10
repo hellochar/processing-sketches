@@ -1,16 +1,16 @@
 class Leaf {
-  List<Small> world = new ArrayList();
+  List<Vein> world = new ArrayList();
 
-  Small root;
+  Vein root;
   // outer boundary from last growth step
-  List<Small> boundary = new ArrayList();
+  List<Vein> boundary = new ArrayList();
   // nodes without any children
-  List<Small> terminalNodes = new ArrayList();
+  List<Vein> terminalNodes = new ArrayList();
 
   PImage depthImage;
 
   Leaf() {
-    root = new Small(new PVector(EXPAND_DIST, 0));
+    root = new Vein(new PVector(EXPAND_DIST, 0));
     root.distanceToRoot = 0;
     root.costToRoot = 0;
   }
@@ -173,10 +173,10 @@ class Leaf {
    */
   boolean growForwardBranch = true;
 
-  class Small {
+  class Vein {
     PVector position;
-    Small parent;
-    List<Small> children;
+    Vein parent;
+    List<Vein> children;
     // number of ancestors in this subtree,
     // computed with computeWeight()
     int weight = -1;
@@ -191,14 +191,14 @@ class Leaf {
     boolean isTerminal = false;
     PVector _offset;
 
-    Small(PVector pos) {
+    Vein(PVector pos) {
       this.position = pos;
       this.children = new LinkedList();
       this._offset = this.position.copy();
       world.add(this);
     }
 
-    void add(Small s) {
+    void add(Vein s) {
       s.parent = this;
       s._offset = s.position.copy().sub(this.position);
 
@@ -330,7 +330,7 @@ class Leaf {
         this.position.set(this.parent.position);
         this.position.add(this._offset);
       }
-      for (Small s : children) {
+      for (Vein s : children) {
         s.computePositions();
       }
     }
@@ -341,8 +341,8 @@ class Leaf {
 
     ReasonStopped reason;
     // attempt to grow outwards in your direction and to the side
-    List<Small> branchOut() {
-      List<Small> nodes = new ArrayList();
+    List<Vein> branchOut() {
+      List<Vein> nodes = new ArrayList();
       if (isTerminal) {
         reason = ReasonStopped.Crowded;
         nodes.add(this);
@@ -384,10 +384,10 @@ class Leaf {
     /**
      * Get the non-immediate-family Small nearest to the point.
      */
-    Small nearestCollidableNeighbor(PVector point) {
-      Small nearestNeighbor = null;
+    Vein nearestCollidableNeighbor(PVector point) {
+      Vein nearestNeighbor = null;
       float nearestNeighborDist = 1e10;
-      for (Small s : world) {
+      for (Vein s : world) {
         if (isImmediateFamily(s)) {
           continue;
         }
@@ -400,12 +400,12 @@ class Leaf {
       return nearestNeighbor;
     }
 
-    boolean isImmediateFamily(Small s) {
+    boolean isImmediateFamily(Vein s) {
       return s == this || s.parent == this;
     }
 
-    boolean isAncestor(Small s) {
-      Small tester = this;
+    boolean isAncestor(Vein s) {
+      Vein tester = this;
       while (tester != null) {
         if (tester == s) {
           return true;
@@ -424,7 +424,7 @@ class Leaf {
       PVector offset = heading.copy().mult(mag);
       PVector position = this.position.copy().add(offset);
       PVector force = new PVector();
-      for (Small s : boundary) {
+      for (Vein s : boundary) {
         if (isImmediateFamily(s) || isAncestor(s)) {
           continue;
         }
@@ -453,7 +453,7 @@ class Leaf {
       // we've now moved away from everyone.
       PVector childPosition = this.position.copy().add(avoidedHeading.setMag(mag));
       boolean isTerminal = false;
-      Small nearestNeighbor = nearestCollidableNeighbor(childPosition);
+      Vein nearestNeighbor = nearestCollidableNeighbor(childPosition);
       if (nearestNeighbor != null && nearestNeighbor.position.dist(childPosition) < TOO_CLOSE_DIST) {
         childPosition.set(nearestNeighbor.position);
 
@@ -463,7 +463,7 @@ class Leaf {
         //isTerminal = true;
       }
 
-      Small newSmall = new Small(childPosition);
+      Vein newSmall = new Vein(childPosition);
       newSmall.isTerminal = isTerminal;
       this.add(newSmall);
       return null;
@@ -483,7 +483,7 @@ class Leaf {
     void computeWeight() {
       if (this.weight == -1) {
         int weight = 1;
-        for (Small s : this.children) {
+        for (Vein s : this.children) {
           s.computeWeight();
           weight += s.weight;
         }
@@ -499,13 +499,13 @@ class Leaf {
     }
 
     // reset weights
-    for (Small s : world) {
+    for (Vein s : world) {
       s.weight = -1;
     }
     root.computeWeight();
 
-    List<Small> newBoundary = new ArrayList();
-    for (Small s : boundary) {
+    List<Vein> newBoundary = new ArrayList();
+    for (Vein s : boundary) {
       s.branchOut();
       //newBoundary.addAll(s.branchOut());
       newBoundary.addAll(s.children);
@@ -515,7 +515,7 @@ class Leaf {
     }
     //world.addAll(newBoundary);
 
-    for (Small s : boundary) {
+    for (Vein s : boundary) {
       if (s.children.size() == 0) {
         terminalNodes.add(s);
       }
@@ -529,7 +529,7 @@ class Leaf {
     //}
 
     // reset weights
-    for (Small s : world) {
+    for (Vein s : world) {
       s.weight = -1;
     }
     root.computeWeight();
@@ -551,7 +551,7 @@ class Leaf {
     root.computeWeight();
     color gray = #397a4c;
     color green = #89da59;
-    for (Small s : world) {
+    for (Vein s : world) {
       strokeWeight(log(1 + s.weight) / 4);
       stroke(lerpColor(gray, green, s.costToRoot / MAX_PATH_COST), 128);
       //stroke(green, 128);
@@ -572,7 +572,7 @@ class Leaf {
       //popMatrix();
     }
     endShape();
-    for (Small s : terminalNodes) {
+    for (Vein s : terminalNodes) {
       if (s.reason == ReasonStopped.Expensive) {
         strokeWeight(1.3);
         stroke(#f0810f, 128);
@@ -584,7 +584,7 @@ class Leaf {
   }
 
   void update() {
-    for (Small s : world) {
+    for (Vein s : world) {
       s.update();
     }
     root.computePositions();
