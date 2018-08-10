@@ -301,12 +301,8 @@ class Leaf {
       int depthPixelIndex = depthY * depthImage.width + depthX;
       if (depthPixelIndex >= 0 && depthPixelIndex < depthImage.pixels.length) {
         float alpha = brightness(depthImage.pixels[depthPixelIndex]);
-        //if (brightness < brightnessGate) {
-        //  brightness = 0;
-        //}
-        //println(alpha);
-        // KinectPV2 signals "there's a person here" by setting rgb to 1.0 (which also results in brightness == 1) 
-        if (alpha == 1) {
+        // KinectPV2 signals "there's a person here" with any value < 255
+        if (alpha < 255) {
           cost = 0;
         }
       }
