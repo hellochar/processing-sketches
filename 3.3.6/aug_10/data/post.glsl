@@ -115,6 +115,8 @@ void main(void) {
     // noise
     totalColor += 0.01 * random(vertTexCoord.xy, 1 + time * 0.001);
 
+    // totalColor = pow(totalColor, vec3(0.45));
+
     // tonemapping
     totalColor = acesFilm(totalColor);
 
