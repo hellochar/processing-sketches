@@ -1,11 +1,11 @@
 import java.util.*;
 
 PShader f;
-color[] colorTheme = new color[] {#011A27, #063852, #F0810F, #E6DF44}; // polyphone
+//color[] colorTheme = new color[] {#011A27, #063852, #F0810F, #E6DF44}; // polyphone
 // color[] colorTheme = new color[] {#021C1E, #004445, #2C7873, #6FB98F};
 // color[] colorTheme = new color[] {#80BD9E, #89DA59, #F98866, #FF420E}; polyphone2
 // color[] colorTheme = new color[] {#50312F, #E4EA8C, #CB0000, #3F6C45};
-// color[] colorTheme = new color[] {#1E1F26, #283655, #486824, #4897D8}; // polyphone 3
+ color[] colorTheme = new color[] {#1E1F26, #283655, #486824, #4897D8}; // polyphone 3
 
 float t = 0;
 float noisePower;
@@ -33,7 +33,7 @@ class Thing {
     rotateX(rx);
     rotateY(ry);
     rotateZ(rz);
-    box(5, 5, 5);
+    box(10, 10, 10);
     //triangle(-20, 20, 20, 20, 0, 20 - 40 * sqrt(3) / 2);
     popMatrix();
   }
@@ -89,10 +89,9 @@ class Thing {
       dz -= r2*z * 0.01;
     }
     
-    // things are going down too fast.
-    dx *= dt * 30;
-    dy *= dt * 30;
-    dz *= dt * 30;
+    dx *= dt * 25;
+    dy *= dt * 25;
+    dz *= dt * 25;
     return new PVector(dx, dy, dz);
   }
 }
@@ -146,7 +145,7 @@ void draw() {
   }
   println(t);
   t += dt;
-  noisePower = pow(5, pow(sin(t / 2.5), 10));
+  noisePower = pow(4, pow(sin(t / 2.5), 10));
   for (Thing t : things) {
     t.update(dt);
     p.add(t.position);
