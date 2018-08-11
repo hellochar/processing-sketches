@@ -20,9 +20,9 @@ class Boid {
     velocity = new PVector(cos(angle), sin(angle));
 
     position = new PVector(x, y);
-    r = 2.0;
-    maxspeed = 2;
-    maxforce = 0.03;
+    r = 5.0;
+    maxspeed = 4;
+    maxforce = 0.05;
   }
 
   void run(ArrayList<Boid> boids) {
@@ -44,12 +44,12 @@ class Boid {
     PVector sep = separate(boids);   // Separation
     PVector ali = align(boids);      // Alignment
     PVector coh = cohesion(boids);   // Cohesion
-    PVector avoid = avoid(toAvoid).limit(maxforce);
+    PVector avoid = avoid(toAvoid);
     // Arbitrarily weight these forces
     sep.mult(1.5);
     ali.mult(1.0);
     coh.mult(1.0);
-    avoid.mult(3.0);
+    avoid.mult(7.0);
     // Add the force vectors to acceleration
     applyForce(sep);
     applyForce(ali);
@@ -68,14 +68,20 @@ class Boid {
     acceleration.mult(0);
   }
   
-  PVector avoid(PGraphics toAvoid) {
+  PVector avoid(PImage toAvoid) {
     PVector futurePositionPos = position.copy().add(velocity.copy().rotate(PI/8).mult(15));
     PVector futurePositionNeg = position.copy().add(velocity.copy().rotate(-PI/8).mult(15));
-    float brightnessPos = brightness(toAvoid.get(round(futurePositionPos.x), round(futurePositionPos.y)));
-    float brightnessNeg = brightness(toAvoid.get(round(futurePositionNeg.x), round(futurePositionNeg.y)));
+    float brightnessPos = brightness(toAvoid.get(
+      round(map(futurePositionPos.x, 0, width, 0, toAvoid.width)),
+      round(map(futurePositionPos.y, 0, height, 0, toAvoid.height))
+    ));
+    float brightnessNeg = brightness(toAvoid.get(
+      round(map(futurePositionNeg.x, 0, width, 0, toAvoid.width)),
+      round(map(futurePositionNeg.y, 0, height, 0, toAvoid.height))
+    ));
     
-    boolean hasBarrierPos = brightnessPos < 1;
-    boolean hasBarrierNeg = brightnessNeg < 1;
+    boolean hasBarrierPos = brightnessPos == 255;
+    boolean hasBarrierNeg = brightnessNeg == 255;
     if (hasBarrierPos && hasBarrierNeg) {
       // it looks too dangerous to proceed. Try slowing down.
       // return velocity.copy().mult(-0.1);
@@ -114,7 +120,7 @@ class Boid {
     float theta = velocity.heading2D() + radians(90);
     // heading2D() above is now heading() but leaving old syntax until Processing.js catches up
     
-    fill(200, 100);
+    fill(255, 100);
     stroke(255);
     pushMatrix();
     translate(position.x, position.y);
@@ -138,7 +144,7 @@ class Boid {
   // Separation
   // Method checks for nearby boids and steers away
   PVector separate (ArrayList<Boid> boids) {
-    float desiredseparation = 25.0f;
+    float desiredseparation = 35.0f;
     PVector steer = new PVector(0, 0, 0);
     int count = 0;
     // For every boid in the system, check if it's too close
@@ -177,7 +183,7 @@ class Boid {
   // Alignment
   // For every nearby boid in the system, calculate the average velocity
   PVector align (ArrayList<Boid> boids) {
-    float neighbordist = 50;
+    float neighbordist = 150;
     PVector sum = new PVector(0, 0);
     int count = 0;
     for (Boid other : boids) {
@@ -208,7 +214,7 @@ class Boid {
   // Cohesion
   // For the average position (i.e. center) of all nearby boids, calculate steering vector towards that position
   PVector cohesion (ArrayList<Boid> boids) {
-    float neighbordist = 50;
+    float neighbordist = 150;
     PVector sum = new PVector(0, 0);   // Start with empty vector to accumulate all positions
     int count = 0;
     for (Boid other : boids) {

@@ -1,3 +1,5 @@
+import KinectPV2.*;
+
 /**
  * Flocking 
  * by Daniel Shiffman.  
@@ -10,10 +12,18 @@
  */
 
 Flock flock;
-PGraphics toAvoid;
+PImage toAvoid;
+
+KinectPV2 kinect;
+
+PShader personShader;
 
 void setup() {
-  size(640, 360);
+  size(1920, 1080, P2D);
+  kinect = new KinectPV2(this);
+  kinect.enableDepthMaskImg(true);
+  kinect.enableBodyTrackImg(true);
+  kinect.init();
   flock = new Flock();
   // Add an initial set of boids into the system
   for (int i = 0; i < 150; i++) {
@@ -21,19 +31,24 @@ void setup() {
   }
   toAvoid = createGraphics(width, height);
   background(220);
+  personShader = loadShader("personShader.glsl");
 }
 
 void draw() {
+  toAvoid = kinect.getBodyTrackImage();
 //  background(192);
-  toAvoid.beginDraw();
-  toAvoid.background(0);
-  toAvoid.noStroke();
-  toAvoid.fill(0, 0);
-  toAvoid.rect(0, 0, width, height);
-  toAvoid.fill(120, 255, 40);
-  toAvoid.ellipse(mouseX, mouseY, 300, 300);
-  toAvoid.endDraw();
-  image(toAvoid, 0, 0);
+
+  //toAvoid.beginDraw();
+  //toAvoid.background(0);
+  //toAvoid.noStroke();
+  //toAvoid.fill(0, 0);
+  //toAvoid.rect(0, 0, width, height);
+  //toAvoid.fill(120, 255, 40);
+  //toAvoid.ellipse(mouseX, mouseY, 300, 300);
+  //toAvoid.endDraw();
+  image(toAvoid, 0, 0, width, height);
+  filter(personShader);
+  
   //stroke(0, 2);
   //for (int i = 0; i < 10; i++) {
     flock.run();
