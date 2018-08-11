@@ -13,12 +13,12 @@ void setup() {
   smooth(8);
   float xR = random(1);
   float yR = random(1);
-  int gridSize = 2;
+  int gridSize = 5;
   pos = new PVector[(width * height) / (gridSize * gridSize)];
   posOriginal = new PVector[pos.length];
   for (int i = 0; i < pos.length; i++) {
-    //pos[i] = new PVector((i % (width / gridSize)) * gridSize, (i / (width / gridSize)) * gridSize);
-    pos[i] = new PVector(random(width), random(height));
+    pos[i] = new PVector((i % (width / gridSize)) * gridSize, (i / (width / gridSize)) * gridSize);
+    //pos[i] = new PVector(random(width), random(height));
     //pos[i] = new PVector(xR * width, yR * height);
     xR = (xR + goldenRatio) % 1;
     yR = (yR + goldenRatio) % 1;
@@ -31,17 +31,23 @@ void setup() {
   kinect.init();
   background(0);
   noiseDetail(8);
-  noiseSeed(8);
+  noiseSeed(12);
   post = loadShader("post.glsl");
 }
 
-float s = 700f;
+float s = 100f;
 float h(float x, float y, float t) {
   return noise(x / s, y / s, t);
 }
 
-float smoothstep(float t) {
+float smoothstep(float x, float min, float max) {
+  float t = constrain( (x - min) / (max - min), 0, 1);
   return t * t * (3 - 2 * t);
+}
+
+// sigmoid is ~1 at x < c-k, ~0 at x > c+k, and decreases in a sigmoid pattern in the middle 
+float sigmoid(float x, float c, float k) {
+  return (float)Math.tanh((-x + c) * PI / k);
 }
 
 void draw() {
@@ -56,7 +62,7 @@ void draw() {
   PImage body = kinect.getBodyTrackImage();
   //float t = smoothstep(map(cos(loopT * TWO_PI), -1, 1, 0, 1));
   //float t = millis() * 0.001f;
-  float t = loopT * 2;
+  float t = cos(loopT * PI);
   //float pullCenter = 1 - 4 * loopT * (1 - loopT);
   //float pullCenter = 1.0 * mouseX / width;
   //blendMode(ADD);
@@ -66,12 +72,13 @@ void draw() {
   //for (PVector p : pos) {
   //  p.set(random(width), random(height));
   //}
-  for( int i = 0; i < pos.length; i++) {
+  for(int i = 0; i < pos.length; i++) {
     PVector p = pos[i];
-    //p.set(posOriginal[i]);
+    //p.set(random(width), random(height));
+    p.set(posOriginal[i]);
     //p.set(width/2, height/2);
     //p.lerp(new PVector(width/2, height/2), pullCenter);
-    for (int z = 0; z < 10; z++) {
+    for (int z = 0; z < 50; z++) {
       //if (random(1) < 0.01) {
       //  p.set(random(width), random(height));
       //}
@@ -85,28 +92,33 @@ void draw() {
       //float od2 = offsetCenterX * offsetCenterX + offsetCenterY * offsetCenterY;
       //float od = sqrt(od2);
       
-      boolean insideCenter = dist(p.x, p.y, width/2, height/2) < width * 2f / 8;
+      float d = dist(p.x, p.y, width/2, height/2);
       
-      PVector v = insideCenter ?
-        new PVector(h(p.x, p.y, t) - 0.5, h(p.x, p.y, t + 10) - 0.5) : 
-        new PVector(h(p.x, p.y, t) - 0.5, h(p.x, p.y, t + 10) - 0.5);
+      //boolean insideCenter = d < width * 2f / 8;
+      float insideCenterAmount = sigmoid(d, width * 0.2, width * 0.13);
+      
+      PVector v = new PVector(h(p.x, p.y, t) - 0.5, h(p.x, p.y, t + 10) - 0.5);
+      float l = v.magSq() / (0.1 * 0.1);
+      //v.normalize();
 
-      v.mult(80);
+      v.mult(20);
+      v.y += 1;
+      v.mult(2);
+      
+      v.mult(insideCenterAmount);
       
       //v.x += (posOriginal[i].x - width/2) * pullCenter;
       //v.y += (posOriginal[i].y - height/2) * pullCenter;
       //v.x -= offsetCenterX / od * pullCenter;
       //v.y -= offsetCenterY / od * pullCenter;
-      v.y += 1;
       
-      if (insideCenter) {
-        v.rotate(PI/2);
-        //v.mult(0.1);
-        stroke(255, 128, 0, 3);
-      } else {
-        stroke(0, 182, 255, 3);
-      }
-      //stroke(lerpColor(color(255, 128, 0), color(0, 182, 255), v.magSq() / (8 * 8)), 3);
+      v.rotate(PI/2 * insideCenterAmount);
+      float outOfFocusAmount = abs(d) / (height/2) * 3.5;
+      float size = 1 * (1 + outOfFocusAmount);
+      strokeWeight(size);
+      float opacityScalar = 1 / pow(1 + outOfFocusAmount, 2);
+      float opacity = max(1, 30 * opacityScalar);
+      stroke(lerpColor(color(255, 128, 12), color(12, 182, 255), insideCenterAmount), opacity);
       //v.y += (1.0 - p.y / height) * 0.5;
       //v.y += 1;
       //vertex(p.x, p.y);
@@ -114,23 +126,23 @@ void draw() {
       p.add(v);
       //vertex(p.x, p.y);
       if (v.magSq() < 0.01 * 0.01) {
-        //break;
-        // p.set(random(width), random(height));
-        p.set(posOriginal[i]);
+        break;
+         //p.set(random(width), random(height));
+        //p.set(posOriginal[i]);
       }
       if (p.x < 0 || p.x > width) {
-        //break;
+        break;
         //p.x = random(width);
-        p.x = posOriginal[i].x;
+        //p.x = posOriginal[i].x;
         //p.y = random(height);
         //p.set(posOriginal[i]);
       }
       if (p.y < 0 || p.y > height) {
-        //break;
+        break;
         //p.set(posOriginal[i]);
         //p.x = random(width);
         //p.y = random(height);
-        p.y = posOriginal[i].y;
+        //p.y = posOriginal[i].y;
       }
     }
   }
@@ -139,5 +151,5 @@ void draw() {
   //fill(255);
   //textAlign(LEFT, TOP);
   //text(t, 0, 0);
-  saveFrame("frames11/####.tif");
+  saveFrame("frames15/####.tif");
 }

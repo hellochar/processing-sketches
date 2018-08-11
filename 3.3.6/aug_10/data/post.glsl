@@ -113,12 +113,12 @@ void main(void) {
     totalColor = mix(totalColor, totalColor * vignetteAmount, 0.5);
 
     // noise
-    totalColor += 0.01 * random(vertTexCoord.xy, 1 + time * 0.001);
+    totalColor += 0.05 * random(vertTexCoord.xy, 1 + time * 0.001);
 
     // totalColor = pow(totalColor, vec3(0.45));
 
     // tonemapping
-    totalColor = acesFilm(totalColor);
+    totalColor = tonemapFilmic(totalColor);
 
     gl_FragColor = vec4(totalColor, 1.0);
 }
