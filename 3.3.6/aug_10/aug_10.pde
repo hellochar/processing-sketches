@@ -9,7 +9,7 @@ PVector[] posOriginal = new PVector[1000];
 
 float goldenRatio = (1 + sqrt(5)) / 2;
 void setup() {
-  size(800, 600, P2D);
+  size(1280, 800, P2D);
   smooth(8);
   float xR = random(1);
   float yR = random(1);
@@ -44,19 +44,19 @@ void draw() {
   //fill(0, 128);
   //noStroke();
   //rect(0, 0, width, height);
-  //if (frameCount >= 150) {
-  //  exit();
-  //}
+  if (frameCount >= 150) {
+    exit();
+  }
   float loopT = frameCount / 150f % 1;
-  //background(0);
+  background(color(1, 26, 39));
   PImage body = kinect.getBodyTrackImage();
   //float t = smoothstep(map(cos(loopT * TWO_PI), -1, 1, 0, 1));
   //float t = millis() * 0.001f;
-  float t = loopT * 15;
-  //float pullCenter = mouseX * 1.0 / width;
+  float t = loopT * 2;
+  float pullCenter = 1 - loopT;
   //blendMode(ADD);
   background(0);
-  stroke(255, 20);
+  //stroke(255, 26);
   //beginShape(LINES);
   //for (PVector p : pos) {
   //  p.set(random(width), random(height));
@@ -76,16 +76,22 @@ void draw() {
       //float offsetCenterY = p.y - height/2;
       //float od2 = offsetCenterX * offsetCenterX + offsetCenterY * offsetCenterY;
       //float od = sqrt(od2);
-      PVector v = new PVector(h(p.x, p.y, t) - 0.5, h(p.x, p.y, t + 10) - 0.5);
-      v.mult(20);
+      
+      boolean insideCenter = dist(p.x, p.y, width/2, height/2) < 250;
+      
+      PVector v = insideCenter ?
+        new PVector(h(p.x, p.y, t * 2) - 0.5, h(p.x, p.y, t * 2 + 10) - 0.5) : 
+        new PVector(h(p.x, p.y, t) - 0.5, h(p.x, p.y, t + 10) - 0.5);
+
+      v.mult(30);
       //v.x -= offsetCenterX / od * pullCenter;
       //v.y -= offsetCenterY / od * pullCenter;
       v.y += 1;
       
-      if (dist(p.x, p.y, width/2, height/2) < 150) {
+      if (insideCenter) {
         v.rotate(PI/2);
-        v.mult(0.1);
-        stroke(255, 128, 0, 12);
+        //v.mult(0.1);
+        stroke(255, 128, 0, 26);
       } else {
         stroke(0, 182, 255, 12);
       }
@@ -95,18 +101,18 @@ void draw() {
       line(p.x, p.y, p.x + v.x, p.y + v.y);
       p.add(v);
       //vertex(p.x, p.y);
-      if (v.magSq() < 0.01 * 0.01) {
+      if (v.magSq() < 0.1 * 0.1) {
         p.set(random(width), random(height));
       }
       if (p.x < 0 || p.x > width) {
-        //p.x = random(width);
+        p.x = random(width);
         //p.y = random(height);
-        p.set(posOriginal[i]);
+        //p.set(posOriginal[i]);
       }
       if (p.y < 0 || p.y > height) {
-        p.set(posOriginal[i]);
+        //p.set(posOriginal[i]);
         //p.x = random(width);
-        //p.y = random(height);
+        p.y = random(height);
       }
     }
   }
@@ -115,5 +121,5 @@ void draw() {
   //fill(255);
   //textAlign(LEFT, TOP);
   //text(t, 0, 0);
-  saveFrame("frames6/####.tif");
+  saveFrame("frames8/####.tif");
 }
