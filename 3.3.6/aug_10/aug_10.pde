@@ -22,16 +22,16 @@ void setup() {
     //pos[i] = new PVector(i * 1f * width / pos.length, yR * 10);
     posOriginal[i] = pos[i].copy();
   }
-  //kinect = new KinectPV2(this);
-  //kinect.enableBodyTrackImg(true);
-  //kinect.init();
+  kinect = new KinectPV2(this);
+  kinect.enableBodyTrackImg(true);
+  kinect.init();
   background(0);
   noiseDetail(8);
   noiseSeed(7);
   post = loadShader("post.glsl");
 }
 
-float s = 100f;
+float s = 500f;
 float h(float x, float y, float t) {
   return noise(x / s, y / s, t);
 }
@@ -49,18 +49,19 @@ void draw() {
   //}
   float loopT = frameCount / 150f % 1;
   //background(0);
-  //PImage body = kinect.getBodyTrackImage();
+  PImage body = kinect.getBodyTrackImage();
   //float t = smoothstep(map(cos(loopT * TWO_PI), -1, 1, 0, 1));
   //float t = millis() * 0.001f;
-  float t = loopT * 10;
+  float t = loopT * 15;
   //float pullCenter = mouseX * 1.0 / width;
   //blendMode(ADD);
-  stroke(255, 5);
-  beginShape(LINES);
+  background(0);
+  stroke(255, 20);
+  //beginShape(LINES);
   //for (PVector p : pos) {
   //  p.set(random(width), random(height));
   //}
-  for (int z = 0; z < 10; z++) {
+  for (int z = 0; z < 1000; z++) {
     for( int i = 0; i < pos.length; i++) {
       PVector p = pos[i];
       //if (random(1) < 0.01) {
@@ -80,15 +81,23 @@ void draw() {
       //v.x -= offsetCenterX / od * pullCenter;
       //v.y -= offsetCenterY / od * pullCenter;
       v.y += 1;
-      v.mult(1);
+      
+      if (dist(p.x, p.y, width/2, height/2) < 150) {
+        v.rotate(PI/2);
+        v.mult(0.1);
+        stroke(255, 128, 0, 12);
+      } else {
+        stroke(0, 182, 255, 12);
+      }
       //v.y += (1.0 - p.y / height) * 0.5;
       //v.y += 1;
-      vertex(p.x, p.y);
+      //vertex(p.x, p.y);
+      line(p.x, p.y, p.x + v.x, p.y + v.y);
       p.add(v);
-      vertex(p.x, p.y);
-      //if (v.magSq() < 0.01 * 0.01) {
-      //  p.set(random(width), random(height));
-      //}
+      //vertex(p.x, p.y);
+      if (v.magSq() < 0.01 * 0.01) {
+        p.set(random(width), random(height));
+      }
       if (p.x < 0 || p.x > width) {
         //p.x = random(width);
         //p.y = random(height);
@@ -101,8 +110,8 @@ void draw() {
       }
     }
   }
-  endShape();
-  //filter(post);
+  //endShape();
+  filter(post);
   //fill(255);
   //textAlign(LEFT, TOP);
   //text(t, 0, 0);
