@@ -58,9 +58,11 @@ void draw() {
       wait -= 1;
     }
   }
-  for(int i = 0; i < 2; i++) {
+  //for(int i = 0; i < 2; i++) {
+  if (frameCount % 4 == 0) {
     leaf.expandBoundary();
   }
+  //}
 //  leaf.update();
   leaf.drawWorld();
   

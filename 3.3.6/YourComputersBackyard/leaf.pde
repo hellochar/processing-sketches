@@ -15,9 +15,9 @@ class Leaf {
   }
 
   void firstGrow() {
-    //for (float y = -140; y <= 140; y += 12) {
-    for (float y = -12; y <= 12; y += 12) {
-      PVector target = new PVector(30, y);
+    for (float y = -160; y <= 160; y += 12) {
+    //for (float y = -12; y <= 12; y += 12) {
+      PVector target = new PVector(2, y);
       PVector targetOffset = target.copy().sub(root.position);
       root.maybeAddBranch(targetOffset.copy().normalize(), targetOffset.mag());
     }
