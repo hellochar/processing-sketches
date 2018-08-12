@@ -118,7 +118,7 @@ void main(void) {
     // totalColor = pow(totalColor, vec3(0.45));
 
     // tonemapping
-    totalColor = tonemapFilmic(totalColor);
+    totalColor = acesFilm(totalColor);
 
     gl_FragColor = vec4(totalColor, 1.0);
 }
