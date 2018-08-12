@@ -75,11 +75,11 @@ void draw() {
   PImage body = kinect.getBodyTrackImage();
   //float t = smoothstep(map(cos(loopT * TWO_PI), -1, 1, 0, 1));
   //float t = millis() * 0.001f;
-  //float t = cos(loopT * PI);
-  float t = loopT;
+  float t = cos(loopT * PI);
+  //float t = loopT;
   //float pullCenter = 1 - 4 * loopT * (1 - loopT);
   //float pullCenter = 1.0 * mouseX / width;
-  float velScalar = sigmoid(loopT, 0.5, 0.1) * 1;
+  float velScalar = min(sigmoid(loopT, 0.9, 0.1), sigmoid(1-loopT, 0.9, 0.1));
   //blendMode(ADD);
   //stroke(255, 26);
   //beginShape(LINES);
