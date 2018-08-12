@@ -113,7 +113,7 @@ void main(void) {
     totalColor = mix(totalColor, totalColor * vignetteAmount, 0.5);
 
     // noise
-    totalColor += 0.05 * random(vertTexCoord.xy, 1 + time * 0.001);
+    totalColor += 0.025 * random(vertTexCoord.xy, 1 + time * 0.001);
 
     // totalColor = pow(totalColor, vec3(0.45));
 

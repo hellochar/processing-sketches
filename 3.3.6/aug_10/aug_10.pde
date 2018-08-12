@@ -27,17 +27,18 @@ void setup() {
   posOriginal = new PVector[pos.length];
   posForce = new PVector[pos.length];
   for (int i = 0; i < pos.length; i++) {
-    //pos[i] = new PVector((i % (width / gridSize)) * gridSize, (i / (width / gridSize)) * gridSize);
     float a = TWO_PI * i / pos.length;
+    posForce[i] = new PVector(cos(a), sin(a));
+    //pos[i] = new PVector((i % (width / gridSize)) * gridSize, (i / (width / gridSize)) * gridSize);
     //pos[i] = new PVector(width/2 + cos(a), height/2 + sin(a));
     //pos[i] = new PVector(random(width), random(height));
     //pos[i] = new PVector(xR * width, yR * height);
     xR = (xR + goldenRatio) % 1;
     yR = (yR + goldenRatio) % 1;
-    pos[i] = new PVector(i * 1f * width / pos.length, height/2);
+    pos[i] = new PVector(width/2 + cos(a) * width * 0.2, height/2 + sin(a) * width * 0.2);
+    //pos[i] = new PVector(i * 1f * width / pos.length, height/2);
     //pos[i] = new PVector(i * 1f * width / pos.length, yR * 10);
     posOriginal[i] = pos[i].copy();
-    posForce[i] = new PVector(cos(a), sin(a));
   }
   kinect = new KinectPV2(this);
   kinect.enableBodyTrackImg(true);
@@ -46,11 +47,11 @@ void setup() {
   trace.background(0, 0);
   trace.endDraw();
   noiseDetail(8);
-  noiseSeed(15);
+  noiseSeed(16);
   post = loadShader("post.glsl");
 }
 
-float s = 100f;
+float s = 400f;
 float h(float x, float y, float t) {
   return noise(x / s, y / s, t);
 }
@@ -78,7 +79,7 @@ void draw() {
   PImage body = kinect.getBodyTrackImage();
   //float t = smoothstep(map(cos(loopT * TWO_PI), -1, 1, 0, 1));
   //float t = millis() * 0.001f;
-  float t = cos(loopT * PI);
+  float t = cos(loopT * PI / 2) * 2;
   //float t = loopT;
   //float pullCenter = 1 - 4 * loopT * (1 - loopT);
   //float pullCenter = 1.0 * mouseX / width;
@@ -97,7 +98,7 @@ void draw() {
     p.set(posOriginal[i]);
     //p.set(width/2, height/2);
     //p.lerp(new PVector(width/2, height/2), pullCenter);
-    for (int z = 0; z < 100; z++) {
+    for (int z = 0; z < 10; z++) {
       //if (random(1) < 0.01) {
       //  p.set(random(width), random(height));
       //}
@@ -118,17 +119,19 @@ void draw() {
       //float insideCenterAmount = 1;
       
       PVector v = new PVector(h(p.x, p.y, t) - 0.5, h(p.x, p.y, t + 10) - 0.5);
+      PVector v2 = new PVector(h(p.x * 5, p.y * 5, t) - 0.5, h(p.x * 5, p.y * 5, t + 10) - 0.5);
+      v.lerp(v2, insideCenterAmount);
       //float l = v.magSq() / (0.1 * 0.1);
       //v.normalize();
 
       v.mult(15);
-      v.mult(map(insideCenterAmount, 1, 0, 1, -1));
+      //v.mult(map(insideCenterAmount, 1, 0, 1, -1));
       //v.y += 1;
       //v.x += offsetCenterX / od * 2;
       //v.y += offsetCenterY / od * 2;
-      v.x += posForce[i].x * 2;
-      v.y += posForce[i].y * 2;
-      v.mult(2);
+      v.x += -posForce[i].x * 3;
+      v.y += -posForce[i].y * 3;
+      v.mult(3);
       v.mult(velScalar);
       
       //v.mult(insideCenterAmount);
@@ -138,8 +141,8 @@ void draw() {
       //v.x -= offsetCenterX / od * pullCenter;
       //v.y -= offsetCenterY / od * pullCenter;
       
-      v.rotate(PI/2 * insideCenterAmount);
-      float outOfFocusAmount = abs(d) / (height/2) * 0;
+      //v.rotate(PI/2 * insideCenterAmount);
+      float outOfFocusAmount = abs(d) / (height/2) * 2;
       float size = 2 * (1 + outOfFocusAmount);
       trace.strokeWeight(size);
       float opacityScalar = 1 / pow(1 + outOfFocusAmount, 2);
@@ -180,9 +183,11 @@ void draw() {
     .bloom(0.5, 20, 30)
     .compose();
 
+  post.set("time", millis() / 1000f);
   filter(post);
   fill(255);
   textAlign(LEFT, TOP);
+  //text(frameCount, 0, 0);
   text(velScalar, 0, 0);
-  saveFrame("frames19/####.tif");
+  saveFrame("frames20/####.tif");
 }
