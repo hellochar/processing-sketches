@@ -22,13 +22,15 @@ void setup() {
   fx = new PostFX(this);
   float xR = random(1);
   float yR = random(1);
-  int gridSize = 50;
+  int gridSize = 10;
   pos = new PVector[(width * height) / (gridSize * gridSize)];
   posOriginal = new PVector[pos.length];
   posForce = new PVector[pos.length];
   for (int i = 0; i < pos.length; i++) {
     float a = TWO_PI * i / pos.length;
-    posForce[i] = new PVector(cos(a), sin(a));
+    float forceA = a;
+    if (i % 2 == 0) forceA += PI;
+    posForce[i] = new PVector(cos(forceA), sin(forceA));
     //pos[i] = new PVector((i % (width / gridSize)) * gridSize, (i / (width / gridSize)) * gridSize);
     //pos[i] = new PVector(width/2 + cos(a), height/2 + sin(a));
     //pos[i] = new PVector(random(width), random(height));
@@ -47,11 +49,11 @@ void setup() {
   trace.background(0, 0);
   trace.endDraw();
   noiseDetail(8);
-  noiseSeed(16);
+  noiseSeed(17);
   post = loadShader("post.glsl");
 }
 
-float s = 40f;
+float s = 100f;
 float h(float x, float y, float t) {
   return noise(x / s, y / s, t);
 }
@@ -83,7 +85,7 @@ void draw() {
   //float t = loopT;
   //float pullCenter = 1 - 4 * loopT * (1 - loopT);
   //float pullCenter = 1.0 * mouseX / width;
-  float velScalar = min(sigmoid(loopT, 0.9, 0.1), sigmoid(1-loopT, 0.9, 0.1)) * 9;
+  float velScalar = min(sigmoid(loopT, 0.9, 0.1), sigmoid(1-loopT, 0.9, 0.1));
   //blendMode(ADD);
   //stroke(255, 26);
   //beginShape(LINES);
@@ -98,7 +100,7 @@ void draw() {
     p.set(posOriginal[i]);
     //p.set(width/2, height/2);
     //p.lerp(new PVector(width/2, height/2), pullCenter);
-    for (int z = 0; z < 10; z++) {
+    for (int z = 0; z < 125; z++) {
       //if (random(1) < 0.01) {
       //  p.set(random(width), random(height));
       //}
@@ -119,7 +121,7 @@ void draw() {
       //float insideCenterAmount = 1;
       
       PVector v = new PVector(h(p.x, p.y, t) - 0.5, h(p.x, p.y, t + 10) - 0.5);
-      PVector v2 = new PVector(h(p.x * 5, p.y * 5, t) - 0.5, h(p.x * 5, p.y * 5, t + 10) - 0.5);
+      PVector v2 = new PVector(h(p.x * 3, p.y * 3, t) - 0.5, h(p.x * 3, p.y * 3, t + 10) - 0.5);
       v.lerp(v2, insideCenterAmount);
       //float l = v.magSq() / (0.1 * 0.1);
       //v.normalize();
@@ -129,8 +131,8 @@ void draw() {
       //v.y += 1;
       //v.x += offsetCenterX / od * 2;
       //v.y += offsetCenterY / od * 2;
-      v.x += -posForce[i].x * 3;
-      v.y += -posForce[i].y * 3;
+      v.x += posForce[i].x * 2;
+      v.y += posForce[i].y * 2;
       v.mult(3);
       v.mult(velScalar);
       
@@ -143,10 +145,10 @@ void draw() {
       
       //v.rotate(PI/2 * insideCenterAmount);
       float outOfFocusAmount = abs(d) / (height/2) * 2;
-      float size = 2 * (1 + outOfFocusAmount);
+      float size = 1 * (1 + outOfFocusAmount);
       trace.strokeWeight(size);
       float opacityScalar = 1 / pow(1 + outOfFocusAmount, 2);
-      float opacity = max(1, 255 * opacityScalar);
+      float opacity = max(1, 64 * opacityScalar);
       trace.stroke(lerpColor(color(255, 128, 12), color(12, 182, 255), insideCenterAmount), opacity);
       //v.y += (1.0 - p.y / height) * 0.5;
       //v.y += 1;
@@ -155,20 +157,20 @@ void draw() {
       p.add(v);
       //vertex(p.x, p.y);
       if (v.magSq() < 0.01 * 0.01) {
-        //break;
+        break;
          //p.set(random(width), random(height));
-        p.set(posOriginal[i]);
+        //p.set(posOriginal[i]);
       }
       if (p.x < 0 || p.x > width) {
-        //break;
+        break;
         //p.x = random(width);
         //p.x = posOriginal[i].x;
         //p.y = random(height);
-        p.set(posOriginal[i]);
+        //p.set(posOriginal[i]);
       }
       if (p.y < 0 || p.y > height) {
-        //break;
-        p.set(posOriginal[i]);
+        break;
+        //p.set(posOriginal[i]);
         //p.x = random(width);
         //p.y = random(height);
         //p.y = posOriginal[i].y;
@@ -189,5 +191,5 @@ void draw() {
   textAlign(LEFT, TOP);
   //text(frameCount, 0, 0);
   text(velScalar, 0, 0);
-  saveFrame("frames21/####.tif");
+  saveFrame("frames22/####.tif");
 }
