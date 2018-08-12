@@ -51,7 +51,7 @@ void setup() {
   post = loadShader("post.glsl");
 }
 
-float s = 400f;
+float s = 40f;
 float h(float x, float y, float t) {
   return noise(x / s, y / s, t);
 }
@@ -79,11 +79,11 @@ void draw() {
   PImage body = kinect.getBodyTrackImage();
   //float t = smoothstep(map(cos(loopT * TWO_PI), -1, 1, 0, 1));
   //float t = millis() * 0.001f;
-  float t = cos(loopT * PI / 2) * 2;
+  float t = cos(loopT * PI / 2) * 8;
   //float t = loopT;
   //float pullCenter = 1 - 4 * loopT * (1 - loopT);
   //float pullCenter = 1.0 * mouseX / width;
-  float velScalar = min(sigmoid(loopT, 0.9, 0.1), sigmoid(1-loopT, 0.9, 0.1));
+  float velScalar = min(sigmoid(loopT, 0.9, 0.1), sigmoid(1-loopT, 0.9, 0.1)) * 9;
   //blendMode(ADD);
   //stroke(255, 26);
   //beginShape(LINES);
@@ -189,5 +189,5 @@ void draw() {
   textAlign(LEFT, TOP);
   //text(frameCount, 0, 0);
   text(velScalar, 0, 0);
-  saveFrame("frames20/####.tif");
+  saveFrame("frames21/####.tif");
 }
