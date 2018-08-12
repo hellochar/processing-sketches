@@ -21,7 +21,7 @@ void setup() {
   fx = new PostFX(this);
   float xR = random(1);
   float yR = random(1);
-  int gridSize = 15;
+  int gridSize = 150;
   pos = new PVector[(width * height) / (gridSize * gridSize)];
   posOriginal = new PVector[pos.length];
   for (int i = 0; i < pos.length; i++) {
@@ -76,25 +76,25 @@ void draw() {
   //float t = smoothstep(map(cos(loopT * TWO_PI), -1, 1, 0, 1));
   //float t = millis() * 0.001f;
   //float t = cos(loopT * PI);
-  float t = 0;
+  float t = loopT;
   //float pullCenter = 1 - 4 * loopT * (1 - loopT);
   //float pullCenter = 1.0 * mouseX / width;
   float velScalar = sigmoid(loopT, 0.5, 0.1) * 1;
   //blendMode(ADD);
-  //background(0);
   //stroke(255, 26);
   //beginShape(LINES);
   //for (PVector p : pos) {
   //  p.set(random(width), random(height));
   //}
   trace.beginDraw();
+  background(0, 0);
   for(int i = 0; i < pos.length; i++) {
     PVector p = pos[i];
     //p.set(random(width), random(height));
-    //p.set(posOriginal[i]);
+    p.set(posOriginal[i]);
     //p.set(width/2, height/2);
     //p.lerp(new PVector(width/2, height/2), pullCenter);
-    for (int z = 0; z < 1; z++) {
+    for (int z = 0; z < 100; z++) {
       //if (random(1) < 0.01) {
       //  p.set(random(width), random(height));
       //}
@@ -135,10 +135,10 @@ void draw() {
       
       v.rotate(PI/2 * insideCenterAmount);
       float outOfFocusAmount = abs(d) / (height/2) * 3.5;
-      float size = 1 * (1 + outOfFocusAmount);
+      float size = 3 * (1 + outOfFocusAmount);
       trace.strokeWeight(size);
       float opacityScalar = 1 / pow(1 + outOfFocusAmount, 2);
-      float opacity = max(1, 128 * opacityScalar);
+      float opacity = max(1, 255 * opacityScalar);
       trace.stroke(lerpColor(color(255, 128, 12), color(12, 182, 255), insideCenterAmount), opacity);
       //v.y += (1.0 - p.y / height) * 0.5;
       //v.y += 1;
@@ -149,18 +149,18 @@ void draw() {
       if (v.magSq() < 0.01 * 0.01) {
         //break;
          //p.set(random(width), random(height));
-        //p.set(posOriginal[i]);
+        p.set(posOriginal[i]);
       }
       if (p.x < 0 || p.x > width) {
         //break;
         //p.x = random(width);
         //p.x = posOriginal[i].x;
         //p.y = random(height);
-        //p.set(posOriginal[i]);
+        p.set(posOriginal[i]);
       }
       if (p.y < 0 || p.y > height) {
         //break;
-        //p.set(posOriginal[i]);
+        p.set(posOriginal[i]);
         //p.x = random(width);
         //p.y = random(height);
         //p.y = posOriginal[i].y;
@@ -171,13 +171,13 @@ void draw() {
   //endShape();
   
   image(trace, 0, 0);
-  //fx.render()
-  //  .bloom(0.5, 20, 30)
-  //  .compose();
+  fx.render()
+    .bloom(0.5, 20, 30)
+    .compose();
 
   filter(post);
   fill(255);
   textAlign(LEFT, TOP);
   text(velScalar, 0, 0);
-  saveFrame("frames16/####.tif");
+  saveFrame("frames18/####.tif");
 }
