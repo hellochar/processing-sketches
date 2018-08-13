@@ -31,9 +31,9 @@ void setup() {
     float forceA = a;
     if (i % 2 == 0) forceA += PI;
     posForce[i] = new PVector(cos(forceA), sin(forceA));
-    //pos[i] = new PVector((i % (width / gridSize)) * gridSize, (i / (width / gridSize)) * gridSize);
+    pos[i] = new PVector((i % (width / gridSize)) * gridSize, (i / (width / gridSize)) * gridSize);
     //pos[i] = new PVector(width/2 + cos(a), height/2 + sin(a));
-    pos[i] = new PVector(random(width), random(height));
+    //pos[i] = new PVector(random(width), random(height));
     //pos[i] = new PVector(xR * width, yR * height);
     xR = (xR + goldenRatio) % 1;
     yR = (yR + goldenRatio) % 1;
@@ -81,7 +81,7 @@ void draw() {
   PImage body = kinect.getBodyTrackImage();
   //float t = smoothstep(map(cos(loopT * TWO_PI), -1, 1, 0, 1));
   //float t = millis() * 0.001f;
-  float t = cos(loopT * PI / 2) * 1;
+  float t = cos(loopT * PI / 2) * 3;
   //float t = loopT;
   //float pullCenter = 1 - 4 * loopT * (1 - loopT);
   //float pullCenter = 1.0 * mouseX / width;
@@ -117,11 +117,11 @@ void draw() {
       float d = dist(p.x, p.y, width/2, height/2);
       
       //boolean insideCenter = d < width * 2f / 8;
-       float insideCenterAmount = sigmoid(d, width * 0.25, width * 0.3);
+       float insideCenterAmount = sigmoid(d, width * 0.2, width * 0.2);
       //float insideCenterAmount = 1;
       
       PVector v = new PVector(h(p.x, p.y, t) - 0.5, h(p.x, p.y, t + 10) - 0.5);
-      PVector v2 = new PVector(h(p.x * 3, p.y * 3, t) - 0.5, h(p.x * 3, p.y * 3, t + 10) - 0.5);
+      PVector v2 = new PVector(h(p.x, p.y, t * 5) - 0.5, h(p.x, p.y, t * 5 + 10) - 0.5);
       v.lerp(v2, insideCenterAmount);
       //float l = v.magSq() / (0.1 * 0.1);
       //v.normalize();
@@ -163,17 +163,19 @@ void draw() {
       }
       if (p.x < 0 || p.x > width) {
         //break;
+        p.x = ((p.x % width) + width) % width;
         //p.x = random(width);
-        p.x = posOriginal[i].x;
+        //p.x = posOriginal[i].x;
         //p.y = random(height);
         //p.set(posOriginal[i]);
       }
       if (p.y < 0 || p.y > height) {
         //break;
+        p.y = ((p.y % height) + height) % height;
         //p.set(posOriginal[i]);
         //p.x = random(width);
         //p.y = random(height);
-        p.y = posOriginal[i].y;
+        //p.y = posOriginal[i].y;
       }
     }
   }
@@ -190,6 +192,6 @@ void draw() {
   fill(255);
   textAlign(LEFT, TOP);
   //text(frameCount, 0, 0);
-  text(velScalar, 0, 0);
-  saveFrame("frames23/####.tif");
+  text(frameCount, 0, 0);
+  saveFrame("frames25/####.tif");
 }
