@@ -108,7 +108,7 @@ class Vein {
     // cost -= 1000 / (1 + exp(pow(50 - s.distanceToRoot, 2) / 100));
     
     // drought outside user skeleton area
-    cost += 20;
+    cost += 12;
 
     PVector screen = s.screenCoordinates();
     int depthX = (int)map(screen.x, 0, width, 0, depthImage.width);

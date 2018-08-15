@@ -17,7 +17,7 @@ class Leaf {
   void firstGrow() {
     for (float y = -160; y <= 160; y += 12) {
     //for (float y = -12; y <= 12; y += 12) {
-      PVector target = new PVector(2, y);
+      PVector target = new PVector(3, y);
       PVector targetOffset = target.copy().sub(root.position);
       root.maybeAddBranch(targetOffset.copy().normalize(), targetOffset.mag());
     }
@@ -80,11 +80,14 @@ class Leaf {
   void drawWorld() {
     // computes whole subtree
     root.computeWeight();
-    color gray = #397a4c;
-    color green = #89da59;
+    // color startColor = #397a4c;
+    // color startColor = #000000;
+    color startColor = #ffffff;
+    // color green = #89da59;
     for (Vein s : world) {
-      strokeWeight(log(1 + s.weight) / 4);
-      stroke(lerpColor(gray, green, s.costToRoot / MAX_PATH_COST), 128);
+      strokeWeight(2 * log(1 + s.weight) / 4);
+      // stroke(lerpColor(startColor, green, s.costToRoot / MAX_PATH_COST), 128);
+      stroke(startColor, 128);
       //stroke(green, 128);
       s.draw();
 

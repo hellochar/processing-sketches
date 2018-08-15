@@ -19,7 +19,7 @@ void setup() {
   //size(2400, 1350, P2D);
   size(1920, 1080, P2D);
   //pixelDensity(1);
-  smooth(8);
+  smooth(3);
   strokeCap(ROUND);
   strokeJoin(ROUND);
   
@@ -73,7 +73,7 @@ void draw() {
   fill(255);
   textAlign(LEFT, TOP);
   textSize(20);
-  text(frameRate, 0, 0);
+  //text(frameRate, 0, 0);
 }
 
 PMatrix2D mat;
@@ -88,12 +88,12 @@ void useLeafMatrix() {
 
   // this will also affect processing's screenX/screenY which we use while growing the leaf!
 
-  translate(width/2, height * 0.9);
+  translate(width/2, height * 0.85);
   rotate(-PI / 2);
   scale(6);
 
   mat = new PMatrix2D();
-  mat.translate(width/2, height * 0.9);
+  mat.translate(width/2, height * 0.85);
   mat.rotate(-PI / 2);
   mat.scale(6);
 }

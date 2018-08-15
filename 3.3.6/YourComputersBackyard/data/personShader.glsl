@@ -11,7 +11,8 @@ uniform vec2 texOffset;
 varying vec4 vertColor;
 varying vec4 vertTexCoord;
 
-const vec3 darkgray = vec3(1., 26., 39.) / 255.;
+// const vec3 darkgray = vec3(1., 26., 39.) / 255.;
+const vec3 darkgray = vec3(0.) / 255.;
 const vec3 darkblue = vec3(6., 56., 82.) / 255.;
 
 void main(void) {

@@ -1,5 +1,5 @@
 // distance between branches. this kind of controls the fine detail of the leaves.s
-float TOO_CLOSE_DIST = 1.5;
+float TOO_CLOSE_DIST = 2.5;
 /**
  * < 0.5 always degenerates - no branching
  * 0.75 still has some degenerates
