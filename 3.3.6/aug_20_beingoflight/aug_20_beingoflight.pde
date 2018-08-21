@@ -64,14 +64,21 @@ void draw() {
   bodies.filter(erode);
   bodies.filter(dilate);
   bodies.endDraw();
-  image(bodies, 0, 0);
+  //image(bodies, 0, 0);
   
-  //source.beginDraw();
-  //source.background(0);
-  //source.imageMode(CENTER);
-  //source.image(bodies, width/2, height/2);
-  //source.endDraw();
-  //image(source, 0, 0);
+  source.beginDraw();
+  source.background(0);
+  source.imageMode(CENTER);
+  source.image(bodies, width/2, height/2);
+  source.noFill();
+  source.stroke(255);
+  source.strokeWeight(5);
+  source.rectMode(CENTER);
+  source.rect(width/2, height/2, bodies.width - 2, bodies.height - 2);
+  //source.filter(edgeHighlighter);
+  source.endDraw();
+  image(source, 0, 0);
+  println(brightness(source.get(mouseX, mouseY)));
   
   //sdfSolver.set("source", source);
   //sdf.beginDraw();
