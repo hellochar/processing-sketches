@@ -49,6 +49,6 @@ void main( void ) {
             newValue = max(newValue, u.rgb - s);
         }
 
-        gl_FragColor = vec4(vec3(newValue), 1.);
+        gl_FragColor = vec4(newValue, 1.);
     }
 }
