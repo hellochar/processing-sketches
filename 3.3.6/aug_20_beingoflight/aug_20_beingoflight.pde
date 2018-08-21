@@ -6,10 +6,24 @@ VideoExport videoExport;
 
 KinectPV2 kinect;
 
+// 1280x720. Black = no person, White = person
 PGraphics source;
-PShader drawPerson;
+// 512x424. Kinect bodies image in source format. 
+PGraphics bodies;
+// Shader converts:
+// KinectPV2 mask img (white = no person, black 0-5 = person id)
+// into source format (black = no person, white = person)
+PShader kinectToSourceDrawer;
+// Shader converts:
+// a filled white body surface
+// into white only on the edges
+PShader edgeHighlighter;
 
+// 1280x720. Black = outline far away, white = outline closer
 PGraphics sdf;
+// Shader converts:
+// sdf + source image
+// into new sdf
 PShader sdfSolver;
 
 PShader erode;
@@ -20,9 +34,14 @@ void setup() {
   kinect = new KinectPV2(this);
   kinect.enableDepthMaskImg(true);
   kinect.init();
+  bodies = createGraphics(KinectPV2.WIDTHDepth, KinectPV2.HEIGHTDepth, P2D);
+  kinectToSourceDrawer = loadShader("kinectToSourceDrawer.glsl");
+  erode = loadShader("erode.glsl");
+  dilate = loadShader("dilate.glsl");
+  
   source = createGraphics(width, height, P2D);
   source.noSmooth();
-  drawPerson = loadShader("personShader.glsl");
+  edgeHighlighter = loadShader("edgeHighlighter.glsl");
   
   sdf = createGraphics(width, height, P2D);
   sdf.noSmooth();
@@ -30,27 +49,29 @@ void setup() {
   sdf.background(0);
   sdf.endDraw();
   sdfSolver = loadShader("sdfSolver.glsl");
-
-  erode = loadShader("erode.glsl");
-  dilate = loadShader("dilate.glsl");
   
   videoExport = new VideoExport(this);
+  videoExport.setMovieFileName("3.mp4");
   videoExport.startMovie();
   
   frameRate(30);
 }
 
 void draw() {
-  source.beginDraw();
-  source.background(0);
-  source.imageMode(CENTER);
-  //source.shader(drawPerson);
-  source.image(kinect.getBodyTrackImage(), width/2, height/2);
-  source.filter(erode);
-  source.filter(dilate);
-  source.filter(drawPerson);
-  source.endDraw();
-  image(source, 0, 0);
+  bodies.beginDraw();
+  bodies.image(kinect.getBodyTrackImage(), 0, 0);
+  bodies.filter(kinectToSourceDrawer);
+  bodies.filter(erode);
+  bodies.filter(dilate);
+  bodies.endDraw();
+  image(bodies, 0, 0);
+  
+  //source.beginDraw();
+  //source.background(0);
+  //source.imageMode(CENTER);
+  //source.image(bodies, width/2, height/2);
+  //source.endDraw();
+  //image(source, 0, 0);
   
   //sdfSolver.set("source", source);
   //sdf.beginDraw();

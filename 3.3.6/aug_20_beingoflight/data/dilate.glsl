@@ -35,20 +35,14 @@ void main(void) {
   vec4 col7 = texture2D(texture, tc7);
   vec4 col8 = texture2D(texture, tc8);
 
-  // take any fragments that are surrounded on all sides by white and
-  // make it white (aka no person)
-  /* if (col1.r == 1. && col3.r == 1. && col5.r == 1. && col7.r == 1.) { */
-  /*     gl_FragColor = vec4(1.); */
-  /* } else { */
-  /*     gl_FragColor = col4; */
-  /* } */
-  vec4 col = min(col0, col1);
-  col = min(col, col2);
-  col = min(col, col3);
-  col = min(col, col4);
-  col = min(col, col5);
-  col = min(col, col6);
-  col = min(col, col7);
-  col = min(col, col8);
+  // expand white pixels
+  vec4 col = max(col0, col1);
+  col = max(col, col2);
+  col = max(col, col3);
+  col = max(col, col4);
+  col = max(col, col5);
+  col = max(col, col6);
+  col = max(col, col7);
+  col = max(col, col8);
   gl_FragColor = col;
 }

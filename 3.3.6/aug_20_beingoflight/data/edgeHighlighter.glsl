@@ -35,12 +35,7 @@ void main(void) {
   vec4 col7 = texture2D(texture, tc7);
   vec4 col8 = texture2D(texture, tc8);
 
-  // this is an "on", but neighbors are all off
-  if (tc4.r < 1. && tc1.r == 1. && tc3.r == 1. && tc5.r == 1. && tc7.r == 1.) {
-      gl_FragColor = vec4(vec3(0.), 1.);
-  } else {
-      vec4 sum = (8.0 * col4 - (col0 + col1 + col2 + col3 + col5 + col6 + col7 + col8)) * 4.;
+  vec4 sum = (8.0 * col4 - (col0 + col1 + col2 + col3 + col5 + col6 + col7 + col8)) * 255.;
 
-      gl_FragColor = vec4(sum.rgb, 1.0);
-  }
+  gl_FragColor = vec4(sum.rgb, 1.0);
 }
