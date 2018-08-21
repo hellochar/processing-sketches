@@ -2,3 +2,5 @@
 *.jpg
 !data/*.png
 tools/
+
+libraries/video
