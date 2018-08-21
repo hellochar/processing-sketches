@@ -3,4 +3,6 @@
 !data/*.png
 tools/
 
+*/ffmpeg.txt
+
 libraries/video
