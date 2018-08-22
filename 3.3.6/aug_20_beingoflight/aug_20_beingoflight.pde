@@ -9,7 +9,7 @@ import ch.bildspur.postfx.*;
 
 Movie movie;
 
-String filename = "beingoflight11.mp4";
+String filename = "beingoflight13.mp4";
 
 VideoExport videoExport;
 
@@ -47,14 +47,60 @@ PImage src;
 PGraphics sortedImage;
 PShader pixelSortShader;
 
-int[] xs;
+float t;
+
+float s = 700f;
+float h(float x, float y, float t) {
+  return noise(x / s, y / s, t);
+}
+
+List<Runner> runners = new ArrayList();
+
+class Runner {
+  float x, y;
+  float x0, y0;
+  float vx, vy;
+  Runner(float x, float y, float vx) {
+    this.x = x;
+    this.y = y;
+    this.x0 = x;
+    this.y0 = y;
+    this.vx = vx;
+    this.vy = 0;
+  }
+  void run() {
+    vertex(x, y);
+    for (int i = 0; i < 50; i++) {
+      PVector v = new PVector(h(x, y, t) - 0.5, h(x, y, t + 10) - 0.5);
+      x += v.x;
+      y += v.y;
+      x += vx;
+      y += vy;
+      int rx = round(x);
+      int ry = round(y);
+      int index = ry * source.width + rx;
+      if (rx < 0 || rx >= width || ry < 0 || ry >= height ||
+          red(source.pixels[index]) > 0) {
+        vertex(x, y);
+        x = x0;
+        y = y0;
+        vertex(x, y);
+      }
+    }
+    vertex(x, y);
+  }
+}
 
 void setup() {
   size(1280, 720, P2D);
-  xs = new int[height];
-  //kinect = new KinectPV2(this);
-  //kinect.enableDepthMaskImg(true);
-  //kinect.init();
+  
+  for (int y = 0; y < height; y++) {
+    runners.add(new Runner(0, y, 1));
+    runners.add(new Runner(width-1, y, -1));
+  }
+  kinect = new KinectPV2(this);
+  kinect.enableDepthMaskImg(true);
+  kinect.init();
   bodies = createGraphics(KinectPV2.WIDTHDepth, KinectPV2.HEIGHTDepth, P2D);
   kinectToSourceDrawer = loadShader("kinectToSourceDrawer.glsl");
   erode = loadShader("erode.glsl");
@@ -97,6 +143,8 @@ void setup() {
 //}
 
 void draw() {
+  float loopT = frameCount / 250f;
+  t = loopT; // cos(loopT * PI / 2) * 3;
   movie.read();
   bodies.beginDraw();
   bodies.image(movie, 0, 0);
@@ -133,28 +181,15 @@ void draw() {
   //source.filter(edgeHighlighter);
   source.endDraw();
   //image(source, 0, 0);
-  background(0);
+  //background(0);
+  fill(0, 25);
+  rect(0, 0, width, height);
   source.loadPixels();
   beginShape(LINES);
   stroke(255);
-  //for(int i = 0; i < 100; i++) {
-    for (int y = 0; y < xs.length; y++) {
-      vertex(xs[y], y);
-      int newX = xs[y];
-      boolean reset = false;
-      for (int i = 0; i < 100; i++) {
-        newX++;
-        int index = y * source.width + newX;
-        if (newX >= source.width || red(source.pixels[index]) > 0) {
-          vertex(newX, y);
-          newX = 0;
-          vertex(newX, y);
-        }
-      }
-      vertex(newX, y);
-      xs[y] = newX;
-    }
-  //}
+  for (Runner r : runners) {
+    r.run();
+  }
   endShape();
   
   //sdfSolver.set("source", source);
