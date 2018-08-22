@@ -47,11 +47,14 @@ PImage src;
 PGraphics sortedImage;
 PShader pixelSortShader;
 
+int[] xs;
+
 void setup() {
   size(1280, 720, P2D);
-  kinect = new KinectPV2(this);
-  kinect.enableDepthMaskImg(true);
-  kinect.init();
+  xs = new int[height];
+  //kinect = new KinectPV2(this);
+  //kinect.enableDepthMaskImg(true);
+  //kinect.init();
   bodies = createGraphics(KinectPV2.WIDTHDepth, KinectPV2.HEIGHTDepth, P2D);
   kinectToSourceDrawer = loadShader("kinectToSourceDrawer.glsl");
   erode = loadShader("erode.glsl");
@@ -89,14 +92,15 @@ void setup() {
   pixelSortShader = loadShader("pixelSort.glsl");
 }
 
-void movieEvent(Movie m) {
-  m.read();
-}
+//void movieEvent(Movie m) {
+//  //m.read();
+//}
 
 void draw() {
+  movie.read();
   bodies.beginDraw();
-  //bodies.image(movie, 0, 0);
-  bodies.image(kinect.getBodyTrackImage(), 0, 0);
+  bodies.image(movie, 0, 0);
+  //bodies.image(kinect.getBodyTrackImage(), 0, 0);
   bodies.filter(kinectToSourceDrawer);
   bodies.filter(erode);
   bodies.filter(dilate);
@@ -128,28 +132,40 @@ void draw() {
   //source.filter(edgeHighlighter);
   //source.filter(edgeHighlighter);
   source.endDraw();
-  image(source, 0, 0);
+  //image(source, 0, 0);
+  background(0);
+  source.loadPixels();
+  beginShape(LINES);
+  stroke(255);
+  //for(int i = 0; i < 100; i++) {
+    for (int y = 0; y < xs.length; y++) {
+      vertex(xs[y], y);
+      int newX = xs[y];
+      boolean reset = false;
+      for (int i = 0; i < 100; i++) {
+        newX++;
+        int index = y * source.width + newX;
+        if (newX >= source.width || red(source.pixels[index]) > 0) {
+          vertex(newX, y);
+          newX = 0;
+          vertex(newX, y);
+        }
+      }
+      vertex(newX, y);
+      xs[y] = newX;
+    }
+  //}
+  endShape();
   
-  sdfSolver.set("source", source);
-  sdfSolver.set("time", millis() / 1000f);
-  sdf.beginDraw();
-  for (int i = 0; i < 2; i++) {
-    sdfSolver.set("diags", i % 2 == 0);
-    sdf.filter(sdfSolver);
-  }
-  sdf.endDraw();
-  image(sdf, 0, 0);
-  
-  fill(255, 128, 0);
-  //ellipse(pos.x, pos.y, 25, 25);
-  float h = brightness(sdf.get(round(pos.x), round(pos.y)));
-  float h1 = brightness(sdf.get(round(pos.x-1), round(pos.y)));
-  float h2 = brightness(sdf.get(round(pos.x+1), round(pos.y)));
-  if (h1 > h) {
-    pos.x -= 1;
-  } else if (h2 > h) {
-    pos.x += 1;
-  }
+  //sdfSolver.set("source", source);
+  //sdfSolver.set("time", millis() / 1000f);
+  //sdf.beginDraw();
+  //for (int i = 0; i < 2; i++) {
+  //  sdfSolver.set("diags", i % 2 == 0);
+  //  sdf.filter(sdfSolver);
+  //}
+  //sdf.endDraw();
+  //image(sdf, 0, 0);
   
   //fx.render()
   //  .bloom(0.5, 20, 30)
