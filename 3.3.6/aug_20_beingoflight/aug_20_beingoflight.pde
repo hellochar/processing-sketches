@@ -9,7 +9,7 @@ import ch.bildspur.postfx.*;
 
 Movie movie;
 
-String filename = "beingoflight16.mp4";
+String filename = "beingoflight18.mp4";
 
 VideoExport videoExport;
 
@@ -82,7 +82,7 @@ class Runner {
   void run(PImage source) {
     //x = x0;
     //y = y0;
-    for (int i = 0; i < 20; i++) {
+    for (int i = 0; i < 10; i++) {
       vertex(x, y);
       float dx = 0, dy = 0;
       PVector v = new PVector(h(x, y, t) - 0.5, h(x, y, t + 10) - 0.5);
@@ -99,10 +99,11 @@ class Runner {
         (h2(x + 1, y, source) - h2(x - 1, y, source)) / 2. * 10,
         (h2(x, y + 1, source) - h2(x, y - 1, source)) / 2. * 10
       );
+      //v2.rotate(PI/2 * 0.99);
       //v2.x += (random(1) - 0.5) * 0.01;
       //v2.y += (random(1) - 0.5) * 0.01;
-      dx += v2.x * 225;
-      dy += v2.y * 225;
+      dx += v2.x * 25;
+      dy += v2.y * 25;
       
       dx += vx * 1;
       dy += vy * 1;
@@ -122,10 +123,14 @@ class Runner {
       //  vertex(x, y);
       //}
       vertex(x, y);
-      if (rx < 0 || rx >= width || ry < 0 || ry >= height || dist(0, 0, dx, dy) < 3) {
+      if (rx < 0 || rx >= width || ry < 0 || ry >= height) {
         x = x0;
         y = y0;
       }
+      //if (dist(0, 0, dx, dy) < 1) {
+      //  x = x0;
+      //  y = y0;
+      //}
     }
     //vertex(x, y);
   }
@@ -138,9 +143,11 @@ void setup() {
   //  runners.add(new Runner(0, y, 1));
   //  runners.add(new Runner(width-1, y, -1));
   //}
-  for (int i = 0; i < 1000; i++) {
-    float angle = i * TWO_PI / 1000;
-    runners.add(new Runner(width/2 + cos(angle) * 250, height/2 + sin(angle) * 250, -cos(angle), -sin(angle)));
+  for (int i = 0; i < 2000; i++) {
+    //float angle = i * TWO_PI / 1000;
+    //runners.add(new Runner(width/2 + cos(angle) * 250, height/2 + sin(angle) * 250, -cos(angle), -sin(angle)));
+    runners.add(new Runner(random(width), random(height), 0, 0));
+    //runners.add(new Runner(map(i, 0, 200, 0, width), height * 0.99, 0, -1));
   }
   kinect = new KinectPV2(this);
   kinect.enableDepthMaskImg(true);
@@ -163,28 +170,28 @@ void setup() {
   
   videoExport = new VideoExport(this);
   videoExport.setMovieFileName(filename);
-  //videoExport.setFfmpegVideoSettings(
-  //  new String[]{
-  //    "[ffmpeg]",                       // ffmpeg executable
-  //    "-y",                             // overwrite old file
-  //    "-f", "rawvideo",                 // format rgb raw
-  //    "-vcodec", "rawvideo",            // in codec rgb raw
-  //    "-s", "[width]x[height]",         // size
-  //    "-pix_fmt", "rgb24",              // pix format rgb24
-  //    "-r", "[fps]",                    // frame rate
-  //    "-i", "-",                        // pipe input
-  //    "-an",                            // no audio
-  //    "-vcodec", "h264",                // out codec h264
-  //    "-movflags",
-  //    "+faststart",
-  //    "-pix_fmt", "yuv420p",            // color space yuv420p
-  //    "-preset", "fast",
-  //    "-profile", "main",
-  //    "-crf", "24",                  // quality
-  //    "-metadata", "comment=[comment]", // comment
-  //    "[output]"                        // output file
-  //  }
-  //);
+  videoExport.setFfmpegVideoSettings(
+    new String[]{
+      "[ffmpeg]",                       // ffmpeg executable
+      "-y",                             // overwrite old file
+      "-f", "rawvideo",                 // format rgb raw
+      "-vcodec", "rawvideo",            // in codec rgb raw
+      "-s", "[width]x[height]",         // size
+      "-pix_fmt", "rgb24",              // pix format rgb24
+      "-r", "[fps]",                    // frame rate
+      "-i", "-",                        // pipe input
+      "-an",                            // no audio
+      "-vcodec", "h264",                // out codec h264
+      "-movflags",
+      "+faststart",
+      "-pix_fmt", "yuv420p",            // color space yuv420p
+      "-preset", "fast",
+      "-profile", "main",
+      "-crf", "24",                  // quality
+      "-metadata", "comment=[comment]", // comment
+      "[output]"                        // output file
+    }
+  );
   videoExport.startMovie();
   
   fx = new PostFX(this);
@@ -195,7 +202,7 @@ void setup() {
   pos = new PVector(width/2, height/2);
   movie = new Movie(this, "depthMask.mp4");
   movie.loop();
-  movie.speed(0.5);
+  movie.speed(0.2);
   //movie.frameRate(10);
   
   src = loadImage("johannes-plenio-629984-unsplash-small.jpg");
@@ -229,23 +236,23 @@ void draw() {
   source.background(0);
   source.imageMode(CENTER);
   source.image(bodies, width/2, height/2, width, height);
-  //source.noFill();
-  //source.stroke(255);
-  //source.strokeWeight(5);
-  //source.rectMode(CENTER);
-  //source.rect(width/2, height/2, bodies.width - 2, bodies.height - 2);
-  //for (int x = 0; x < width; x += 10) {
-  //  source.line(
-  //    x, 0,
-  //    x, height
-  //  );
-  //}
-  //for (int y = 0; y < height; y += 10) {
-  //  source.line(
-  //    0, y,
-  //    width, y
-  //  );
-  //}
+  source.noFill();
+  source.stroke(255);
+  source.strokeWeight(5);
+  source.rectMode(CENTER);
+  source.rect(width/2, height/2, bodies.width - 2, bodies.height - 2);
+  for (int x = 0; x < width; x += 10) {
+    source.line(
+      x, 0,
+      x, height
+    );
+  }
+  for (int y = 0; y < height; y += 10) {
+    source.line(
+      0, y,
+      width, y
+    );
+  }
   source.filter(edgeHighlighter);
   //source.filter(edgeHighlighter);
   //source.filter(edgeHighlighter);
