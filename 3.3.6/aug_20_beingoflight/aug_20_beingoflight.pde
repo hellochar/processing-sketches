@@ -9,7 +9,7 @@ import ch.bildspur.postfx.*;
 
 Movie movie;
 
-String filename = "beingoflight13.mp4";
+String filename = "beingoflight14.mp4";
 
 VideoExport videoExport;
 
@@ -49,9 +49,19 @@ PShader pixelSortShader;
 
 float t;
 
-float s = 700f;
+float s = 150f;
 float h(float x, float y, float t) {
   return noise(x / s, y / s, t);
+}
+float h2(float x, float y, PImage src) {
+  int rx = round(x);
+  int ry = round(y);
+  if (rx < 0 || rx >= width || ry < 0 || ry >= height) {
+    return 0;
+  } else {
+    int index = ry * src.width + rx;
+    return red(src.pixels[index]) / 255.0;
+  }
 }
 
 List<Runner> runners = new ArrayList();
@@ -60,43 +70,70 @@ class Runner {
   float x, y;
   float x0, y0;
   float vx, vy;
-  Runner(float x, float y, float vx) {
+  Runner(float x, float y, float vx, float vy) {
     this.x = x;
     this.y = y;
     this.x0 = x;
     this.y0 = y;
     this.vx = vx;
-    this.vy = 0;
+    this.vy = vy;
   }
-  void run() {
-    vertex(x, y);
-    for (int i = 0; i < 50; i++) {
+  
+  void run(PImage source) {
+    //x = x0;
+    //y = y0;
+    for (int i = 0; i < 25; i++) {
+      vertex(x, y);
+      float dx = 0, dy = 0;
       PVector v = new PVector(h(x, y, t) - 0.5, h(x, y, t + 10) - 0.5);
-      x += v.x;
-      y += v.y;
-      x += vx;
-      y += vy;
+      v.mult(5);
+      dx += v.x;
+      dy += v.y;
+      
+      PVector v2 = new PVector(
+        (h2(x + 1, y, source) - h2(x - 1, y, source)) / 2. * 10,
+        (h2(x, y + 1, source) - h2(x, y - 1, source)) / 2. * 10
+      );
+      dx += v2.x * 125;
+      dy += v2.y * 125;
+      
+      dx += vx;
+      dy += vy;
+      
+      dx += random(1) - 0.5;
+      dy += random(1) - 0.5;
+      
+      x += dx;
+      y += dy;
       int rx = round(x);
       int ry = round(y);
-      int index = ry * source.width + rx;
-      if (rx < 0 || rx >= width || ry < 0 || ry >= height ||
-          red(source.pixels[index]) > 0) {
-        vertex(x, y);
+      //int index = ry * source.width + rx;
+      //    red(source.pixels[index]) > 0) {
+      //  vertex(x, y);  
+      //  x = x0;
+      //  y = y0;
+      //  vertex(x, y);
+      //}
+      vertex(x, y);
+      if (rx < 0 || rx >= width || ry < 0 || ry >= height) {
         x = x0;
         y = y0;
-        vertex(x, y);
       }
     }
-    vertex(x, y);
+    //vertex(x, y);
   }
 }
 
 void setup() {
   size(1280, 720, P2D);
   
-  for (int y = 0; y < height; y++) {
-    runners.add(new Runner(0, y, 1));
-    runners.add(new Runner(width-1, y, -1));
+  //for (int y = 0; y < height; y += 2) {
+  //  runners.add(new Runner(0, y, 1));
+  //  runners.add(new Runner(width-1, y, -1));
+  //}
+  for (int i = 0; i < 1000; i++) {
+    float angle = i * TWO_PI / 1000;
+    runners.add(new Runner(width/2 + cos(angle) * 250, height/2 + sin(angle) * 250, -cos(angle), -sin(angle)));
   }
   kinect = new KinectPV2(this);
   kinect.enableDepthMaskImg(true);
@@ -129,6 +166,7 @@ void setup() {
   pos = new PVector(width/2, height/2);
   movie = new Movie(this, "depthMask.mp4");
   movie.loop();
+  movie.frameRate(15);
   
   src = loadImage("johannes-plenio-629984-unsplash-small.jpg");
   sortedImage = createGraphics(width, height, P2D);
@@ -138,14 +176,15 @@ void setup() {
   pixelSortShader = loadShader("pixelSort.glsl");
 }
 
-//void movieEvent(Movie m) {
-//  //m.read();
-//}
+void movieEvent(Movie m) {
+  m.read();
+}
 
 void draw() {
+  //println(frameRate);
   float loopT = frameCount / 250f;
   t = loopT; // cos(loopT * PI / 2) * 3;
-  movie.read();
+  //movie.read();
   bodies.beginDraw();
   bodies.image(movie, 0, 0);
   //bodies.image(kinect.getBodyTrackImage(), 0, 0);
@@ -154,6 +193,8 @@ void draw() {
   bodies.filter(dilate);
   bodies.endDraw();
   //image(bodies, 0, 0);
+  
+  background(0);
   
   source.beginDraw();
   source.background(0);
@@ -181,32 +222,33 @@ void draw() {
   //source.filter(edgeHighlighter);
   source.endDraw();
   //image(source, 0, 0);
+  
+  sdfSolver.set("source", source);
+  sdfSolver.set("time", millis() / 1000f);
+  sdf.beginDraw();
+  for (int i = 0; i < 40; i++) {
+    sdfSolver.set("diags", i % 2 == 0);
+    sdf.filter(sdfSolver);
+  }
+  sdf.endDraw();
+  //image(sdf, 0, 0);
+  
   //background(0);
   fill(0, 25);
   rect(0, 0, width, height);
-  source.loadPixels();
+  sdf.loadPixels();
   beginShape(LINES);
   stroke(255);
   for (Runner r : runners) {
-    r.run();
+    r.run(sdf);
   }
   endShape();
   
-  //sdfSolver.set("source", source);
-  //sdfSolver.set("time", millis() / 1000f);
-  //sdf.beginDraw();
-  //for (int i = 0; i < 2; i++) {
-  //  sdfSolver.set("diags", i % 2 == 0);
-  //  sdf.filter(sdfSolver);
-  //}
-  //sdf.endDraw();
-  //image(sdf, 0, 0);
-  
-  //fx.render()
-  //  .bloom(0.5, 20, 30)
-  //  .compose();
-  //post.set("time", millis() / 1000f);
-  //filter(post);
+  fx.render()
+    .bloom(0.5, 20, 30)
+    .compose();
+  post.set("time", millis() / 1000f);
+  filter(post);
   
   //sortedImage.beginDraw();
   //sortedImage.image(src, 0, 0);
