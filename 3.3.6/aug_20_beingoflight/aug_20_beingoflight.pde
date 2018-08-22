@@ -9,7 +9,7 @@ import ch.bildspur.postfx.*;
 
 Movie movie;
 
-String filename = "beingoflight14.mp4";
+String filename = "beingoflight16.mp4";
 
 VideoExport videoExport;
 
@@ -82,7 +82,7 @@ class Runner {
   void run(PImage source) {
     //x = x0;
     //y = y0;
-    for (int i = 0; i < 25; i++) {
+    for (int i = 0; i < 20; i++) {
       vertex(x, y);
       float dx = 0, dy = 0;
       PVector v = new PVector(h(x, y, t) - 0.5, h(x, y, t + 10) - 0.5);
@@ -90,18 +90,25 @@ class Runner {
       dx += v.x;
       dy += v.y;
       
+      //float ox = x - width/2;
+      //float oy = y - height/2;
+      //dx += ox * 0.001;
+      //dy += oy * 0.001;
+      
       PVector v2 = new PVector(
         (h2(x + 1, y, source) - h2(x - 1, y, source)) / 2. * 10,
         (h2(x, y + 1, source) - h2(x, y - 1, source)) / 2. * 10
       );
-      dx += v2.x * 125;
-      dy += v2.y * 125;
+      //v2.x += (random(1) - 0.5) * 0.01;
+      //v2.y += (random(1) - 0.5) * 0.01;
+      dx += v2.x * 225;
+      dy += v2.y * 225;
       
-      dx += vx;
-      dy += vy;
+      dx += vx * 1;
+      dy += vy * 1;
       
-      dx += random(1) - 0.5;
-      dy += random(1) - 0.5;
+      //dx += random(1) - 0.5;
+      //dy += random(1) - 0.5;
       
       x += dx;
       y += dy;
@@ -115,7 +122,7 @@ class Runner {
       //  vertex(x, y);
       //}
       vertex(x, y);
-      if (rx < 0 || rx >= width || ry < 0 || ry >= height) {
+      if (rx < 0 || rx >= width || ry < 0 || ry >= height || dist(0, 0, dx, dy) < 3) {
         x = x0;
         y = y0;
       }
@@ -156,6 +163,28 @@ void setup() {
   
   videoExport = new VideoExport(this);
   videoExport.setMovieFileName(filename);
+  //videoExport.setFfmpegVideoSettings(
+  //  new String[]{
+  //    "[ffmpeg]",                       // ffmpeg executable
+  //    "-y",                             // overwrite old file
+  //    "-f", "rawvideo",                 // format rgb raw
+  //    "-vcodec", "rawvideo",            // in codec rgb raw
+  //    "-s", "[width]x[height]",         // size
+  //    "-pix_fmt", "rgb24",              // pix format rgb24
+  //    "-r", "[fps]",                    // frame rate
+  //    "-i", "-",                        // pipe input
+  //    "-an",                            // no audio
+  //    "-vcodec", "h264",                // out codec h264
+  //    "-movflags",
+  //    "+faststart",
+  //    "-pix_fmt", "yuv420p",            // color space yuv420p
+  //    "-preset", "fast",
+  //    "-profile", "main",
+  //    "-crf", "24",                  // quality
+  //    "-metadata", "comment=[comment]", // comment
+  //    "[output]"                        // output file
+  //  }
+  //);
   videoExport.startMovie();
   
   fx = new PostFX(this);
@@ -166,7 +195,8 @@ void setup() {
   pos = new PVector(width/2, height/2);
   movie = new Movie(this, "depthMask.mp4");
   movie.loop();
-  movie.frameRate(15);
+  movie.speed(0.5);
+  //movie.frameRate(10);
   
   src = loadImage("johannes-plenio-629984-unsplash-small.jpg");
   sortedImage = createGraphics(width, height, P2D);
@@ -176,15 +206,15 @@ void setup() {
   pixelSortShader = loadShader("pixelSort.glsl");
 }
 
-void movieEvent(Movie m) {
-  m.read();
-}
+//void movieEvent(Movie m) {
+//  m.read();
+//}
 
 void draw() {
   //println(frameRate);
   float loopT = frameCount / 250f;
   t = loopT; // cos(loopT * PI / 2) * 3;
-  //movie.read();
+  movie.read();
   bodies.beginDraw();
   bodies.image(movie, 0, 0);
   //bodies.image(kinect.getBodyTrackImage(), 0, 0);
@@ -192,9 +222,8 @@ void draw() {
   bodies.filter(erode);
   bodies.filter(dilate);
   bodies.endDraw();
-  //image(bodies, 0, 0);
   
-  background(0);
+  background(1, 26, 39);
   
   source.beginDraw();
   source.background(0);
