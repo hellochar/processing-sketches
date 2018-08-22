@@ -102,7 +102,13 @@ void main( void ) {
         // so, we want to compute the new sdf value. We have:
         // texture, the previous values
         // we're just max of me and (my neighbors - 1)
-        vec3 s = vec3(1. / 255.);
+        /* vec3 s = vec3(1. / 255.); */
+
+        float d = length(uv - (vec2(sin(time), cos(time)) * 0.5 + 0.5)) / 2.;
+        /* float d = length(uv - vec2(0.5)); */
+        vec2 noiseUv = uv * 20 * (1. - d);
+        vec3 s = vec3(1. / 255.) * sigmoid(snoise(vec3(noiseUv, time)));
+        s *= 1. + d * 80.;
         vec3 s2 = s * sqrt(2.);
 
         vec4 me = texture2D(texture, uv);

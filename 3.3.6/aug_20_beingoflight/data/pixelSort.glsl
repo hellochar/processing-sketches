@@ -54,5 +54,5 @@ void main(void) {
       gl_FragColor = right;
   }
 
-  gl_FragColor.rgb -= sdfValue.rgb;
+  gl_FragColor.rgb -= sdfValue.rgb / 10.;
 }

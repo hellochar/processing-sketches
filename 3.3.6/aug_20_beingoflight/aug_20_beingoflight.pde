@@ -9,7 +9,7 @@ import ch.bildspur.postfx.*;
 
 Movie movie;
 
-String filename = "beingoflight7.mp4";
+String filename = "beingoflight11.mp4";
 
 VideoExport videoExport;
 
@@ -49,9 +49,9 @@ PShader pixelSortShader;
 
 void setup() {
   size(1280, 720, P2D);
-  //kinect = new KinectPV2(this);
-  //kinect.enableDepthMaskImg(true);
-  //kinect.init();
+  kinect = new KinectPV2(this);
+  kinect.enableDepthMaskImg(true);
+  kinect.init();
   bodies = createGraphics(KinectPV2.WIDTHDepth, KinectPV2.HEIGHTDepth, P2D);
   kinectToSourceDrawer = loadShader("kinectToSourceDrawer.glsl");
   erode = loadShader("erode.glsl");
@@ -95,8 +95,8 @@ void movieEvent(Movie m) {
 
 void draw() {
   bodies.beginDraw();
-  bodies.image(movie, 0, 0);
-  //bodies.image(kinect.getBodyTrackImage(), 0, 0);
+  //bodies.image(movie, 0, 0);
+  bodies.image(kinect.getBodyTrackImage(), 0, 0);
   bodies.filter(kinectToSourceDrawer);
   bodies.filter(erode);
   bodies.filter(dilate);
@@ -131,8 +131,9 @@ void draw() {
   image(source, 0, 0);
   
   sdfSolver.set("source", source);
+  sdfSolver.set("time", millis() / 1000f);
   sdf.beginDraw();
-  for (int i = 0; i < 20; i++) {
+  for (int i = 0; i < 2; i++) {
     sdfSolver.set("diags", i % 2 == 0);
     sdf.filter(sdfSolver);
   }
@@ -156,18 +157,14 @@ void draw() {
   //post.set("time", millis() / 1000f);
   //filter(post);
   
-  sortedImage.beginDraw();
+  //sortedImage.beginDraw();
   //sortedImage.image(src, 0, 0);
-  pixelSortShader.set("sdf", source);
-  for (int i = 0; i < 2; i++) {
-    sortedImage.filter(pixelSortShader);
-  }
-  //sortedImage.filter(pixelSortShader);
-  //sortedImage.filter(pixelSortShader);
-  //sortedImage.filter(pixelSortShader);
-  //sortedImage.filter(pixelSortShader);
-  sortedImage.endDraw();
-  image(sortedImage, 0, 0);
+  //pixelSortShader.set("sdf", sdf);
+  //for (int i = 0; i < 20*sin(frameCount / 20f) + 20; i++) {
+  //  sortedImage.filter(pixelSortShader);
+  //}
+  //sortedImage.endDraw();
+  //image(sortedImage, 0, 0);
 
   fill(255);
   textAlign(LEFT, TOP);
