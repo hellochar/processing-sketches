@@ -28,7 +28,7 @@ import java.util.*;
 
 // then we do it again and again and hope the walkers get better
 
-int gridWidth = 50, gridHeight = 50;
+int gridWidth = 40, gridHeight = 40;
 
 int goalX = gridWidth/2, goalY = 10;
 
@@ -77,6 +77,9 @@ class Walker implements Comparable<Walker> {
     if (y < 0 || y >= gridHeight) {
       return Status.DEAD;
     }
+    if (obstructed[x][y]) {
+      return Status.DEAD;
+    }
     if (index >= path.length) {
       return Status.UNFINISHED;
     }
@@ -103,13 +106,21 @@ class Walker implements Comparable<Walker> {
     
     float scoreAtGoal = d == 0 ? 1000 : 0;
     float scoreCloseToGoal = -d * 2;
-    float scoreTime = -index * 0.1;
+    float scoreTime =
+      status == Status.DEAD ? index * 0.1 :
+      status == Status.WON ? (index * -0.1) :
+      0;
+    float scoreDead = status == status.DEAD ? -1000 : 0;
     
-    return scoreAtGoal + scoreCloseToGoal + scoreTime;
+    return scoreAtGoal + scoreCloseToGoal + scoreTime + scoreDead;
   }
   
   // change 10% of the directions
   Walker mutate() {
+    // very small chance - completely rerandom
+    if (random(1) < 0.01) {
+      return new Walker(randomPath());
+    }
     Direction[] newPath = new Direction[path.length];
     arrayCopy(path, newPath);
     while(random(1) > 0.1) {
@@ -133,13 +144,15 @@ Direction randomDirection() {
   return DIRECTIONS[(int)random(0, DIRECTIONS.length)];
 }
 
-Direction[] randomPath(int len) {
-  Direction[] path = new Direction[len];
-  for (int i = 0; i < len; i++) { 
+Direction[] randomPath() {
+  Direction[] path = new Direction[GEN_LIFETIME];
+  for (int i = 0; i < GEN_LIFETIME; i++) { 
     path[i] = randomDirection();
   }
   return path;
 }
+
+boolean[][] obstructed = new boolean[gridWidth][gridHeight];
 
 class Generation {
   List<Walker> population;
@@ -176,34 +189,55 @@ class Generation {
 public Generation randomGeneration() {
   List<Walker> generation = new ArrayList();
   for (int i = 0; i < 50; i++) {
-    Walker walker = new Walker(randomPath(GEN_LIFETIME));
+    Walker walker = new Walker(randomPath());
     generation.add(walker);
   }
   return new Generation(generation);
 }
 
 Generation gen;
-final int GEN_LIFETIME = 200;
+final int GEN_LIFETIME = 500;
 
 void setup() {
-  size(900, 900, P2D);
+  size(800, 800, P2D);
   smooth(8);
   gen = randomGeneration();
 }
 
+float DS = 20;
+
+void mouseDragged() {
+  int ix = (int)(mouseX / DS);
+  int iy = (int)(mouseY / DS);
+  if (ix >= 0 && ix < gridWidth && iy >= 0 && iy < gridHeight) {
+    obstructed[ix][iy] = mouseButton == LEFT ? true : false;
+  }
+}
+
 void draw() {
-  for (int i = 0; i < 20; i++) {
+  background(1, 26, 39);
+  //fill(1, 26, 39, 2);
+  //noStroke();
+  //rect(0, 0, width, height);
+  for (int i = 0; i < (keyPressed ? 1 : 20); i++) {
     gen.step();
+    //for (Walker w : gen.population) {
+    //  float px = w.x * DS;
+    //  float py = w.y * DS;
+    //  //text((int)w.score(), px, py);
+    //  //fill(#fcfdf1, 64);
+    //  fill(#fcfdf1);
+    //  //fill(lerpColor(color(255, 64, 64), color(64, 255, 64), (20 + w.score()) / 20), 12);
+    //  ellipse(px + DS/2, py + DS/2, DS, DS);
+    //}
   }
   if (gen.age >= GEN_LIFETIME) {
     gen = gen.nextGeneration();
   }
   
-  background(1, 26, 39);
   // draw grid
   strokeWeight(1);
-  stroke(#88847d);
-  float DS = 15;
+  stroke(#88847d, 64);
   for(int x = 0; x <= gridWidth; x++) {
     float px = x * DS;
     line(px, 0, px, gridHeight * DS);
@@ -218,6 +252,14 @@ void draw() {
     text((int)w.score(), px, py);
     fill(#fcfdf1);
     ellipse(px + DS/2, py + DS/2, DS, DS);
+  }
+  for (int x = 0; x < gridWidth; x++) {
+    for (int y = 0; y < gridHeight; y++) {
+      if (obstructed[x][y]) {
+        fill(#f3d210);
+        rect(x * DS, y * DS, DS, DS);
+      }
+    }
   }
   fill(255, 128, 0);
   rect(goalX * DS, goalY * DS, DS, DS);
