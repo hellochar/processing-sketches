@@ -102,7 +102,7 @@ void main( void ) {
         // so, we want to compute the new sdf value. We have:
         // texture, the previous values
         // we're just max of me and (my neighbors - 1)
-        vec3 s = vec3(10. / 255.);
+        vec3 s = vec3(2. / 255.);
 
         /* float d = length(uv - (vec2(sin(time), cos(time)) * 0.5 + 0.5)) / 2.; */
         /* // float d = length(uv - vec2(0.5)); */

@@ -9,7 +9,7 @@ import ch.bildspur.postfx.*;
 
 Movie movie;
 
-String filename = "beingoflight18.mp4";
+String filename = "beingoflight20.mp4";
 
 VideoExport videoExport;
 
@@ -80,13 +80,13 @@ class Runner {
   }
   
   void run(PImage source) {
-    //x = x0;
-    //y = y0;
+    x = x0;
+    y = y0;
     for (int i = 0; i < 10; i++) {
       vertex(x, y);
       float dx = 0, dy = 0;
       PVector v = new PVector(h(x, y, t) - 0.5, h(x, y, t + 10) - 0.5);
-      v.mult(5);
+      v.mult(2);
       dx += v.x;
       dy += v.y;
       
@@ -102,14 +102,14 @@ class Runner {
       //v2.rotate(PI/2 * 0.99);
       //v2.x += (random(1) - 0.5) * 0.01;
       //v2.y += (random(1) - 0.5) * 0.01;
-      dx += v2.x * 25;
-      dy += v2.y * 25;
+      dx += v2.x * 55;
+      dy += v2.y * 55;
       
       dx += vx * 1;
       dy += vy * 1;
       
-      //dx += random(1) - 0.5;
-      //dy += random(1) - 0.5;
+      dx += (random(1) - 0.5);
+      dy += (random(1) - 0.5);
       
       x += dx;
       y += dy;
@@ -149,9 +149,9 @@ void setup() {
     runners.add(new Runner(random(width), random(height), 0, 0));
     //runners.add(new Runner(map(i, 0, 200, 0, width), height * 0.99, 0, -1));
   }
-  kinect = new KinectPV2(this);
-  kinect.enableDepthMaskImg(true);
-  kinect.init();
+  //kinect = new KinectPV2(this);
+  //kinect.enableDepthMaskImg(true);
+  //kinect.init();
   bodies = createGraphics(KinectPV2.WIDTHDepth, KinectPV2.HEIGHTDepth, P2D);
   kinectToSourceDrawer = loadShader("kinectToSourceDrawer.glsl");
   erode = loadShader("erode.glsl");
@@ -202,7 +202,7 @@ void setup() {
   pos = new PVector(width/2, height/2);
   movie = new Movie(this, "depthMask.mp4");
   movie.loop();
-  movie.speed(0.2);
+  movie.speed(0.5);
   //movie.frameRate(10);
   
   src = loadImage("johannes-plenio-629984-unsplash-small.jpg");
@@ -238,21 +238,21 @@ void draw() {
   source.image(bodies, width/2, height/2, width, height);
   source.noFill();
   source.stroke(255);
-  source.strokeWeight(5);
-  source.rectMode(CENTER);
-  source.rect(width/2, height/2, bodies.width - 2, bodies.height - 2);
-  for (int x = 0; x < width; x += 10) {
-    source.line(
-      x, 0,
-      x, height
-    );
-  }
-  for (int y = 0; y < height; y += 10) {
-    source.line(
-      0, y,
-      width, y
-    );
-  }
+  source.strokeWeight(50);
+  //source.rectMode(CENTER);
+  //source.rect(width/2, height/2, bodies.width - 2, bodies.height - 2);
+  //for (int x = 0; x < width; x += 100) {
+  //  source.line(
+  //    x, 0,
+  //    x, height
+  //  );
+  //}
+  //for (int y = 0; y < height; y += 100) {
+  //  source.line(
+  //    0, y,
+  //    width, y
+  //  );
+  //}
   source.filter(edgeHighlighter);
   //source.filter(edgeHighlighter);
   //source.filter(edgeHighlighter);
@@ -262,7 +262,7 @@ void draw() {
   sdfSolver.set("source", source);
   sdfSolver.set("time", millis() / 1000f);
   sdf.beginDraw();
-  for (int i = 0; i < 40; i++) {
+  for (int i = 0; i < 4; i++) {
     sdfSolver.set("diags", i % 2 == 0);
     sdf.filter(sdfSolver);
   }
