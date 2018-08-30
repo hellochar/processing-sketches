@@ -9,7 +9,7 @@ import ch.bildspur.postfx.*;
 
 Movie movie;
 
-String filename = "beingoflight20.mp4";
+String filename = "beingoflight22.mp4";
 
 VideoExport videoExport;
 
@@ -37,6 +37,13 @@ PGraphics sdf;
 // sdf + source image
 // into new sdf
 PShader sdfSolver;
+
+PGraphics adf;
+// Shader converts:
+// source image
+// into distance field analytically
+PShader adfSolver;
+PShader blur;
 
 PostFX fx;
 PShader post;
@@ -83,10 +90,10 @@ class Runner {
     x = x0;
     y = y0;
     for (int i = 0; i < 10; i++) {
-      vertex(x, y);
+      float bodyValue = h2(x, y, source);
       float dx = 0, dy = 0;
       PVector v = new PVector(h(x, y, t) - 0.5, h(x, y, t + 10) - 0.5);
-      v.mult(2);
+      v.mult(bodyValue * 55);
       dx += v.x;
       dy += v.y;
       
@@ -99,18 +106,21 @@ class Runner {
         (h2(x + 1, y, source) - h2(x - 1, y, source)) / 2. * 10,
         (h2(x, y + 1, source) - h2(x, y - 1, source)) / 2. * 10
       );
-      //v2.rotate(PI/2 * 0.99);
+      v2.rotate(PI);
       //v2.x += (random(1) - 0.5) * 0.01;
       //v2.y += (random(1) - 0.5) * 0.01;
-      dx += v2.x * 55;
-      dy += v2.y * 55;
+      //dx += v2.x * 155;
+      //dy += v2.y * 155;
       
       dx += vx * 1;
       dy += vy * 1;
       
       dx += (random(1) - 0.5);
       dy += (random(1) - 0.5);
-      
+
+      stroke(lerpColor(color(0, 128, 255), color(255, 255, 220), (dx*dx+dy*dy) / 15));
+      beginShape(LINES);
+      vertex(x, y);
       x += dx;
       y += dy;
       int rx = round(x);
@@ -131,6 +141,7 @@ class Runner {
       //  x = x0;
       //  y = y0;
       //}
+      endShape();
     }
     //vertex(x, y);
   }
@@ -167,6 +178,15 @@ void setup() {
   sdf.background(0);
   sdf.endDraw();
   sdfSolver = loadShader("sdfSolver.glsl");
+  
+  adf = createGraphics(width, height, P2D);
+  adf.noSmooth();
+  adf.beginDraw();
+  adf.background(0);
+  adf.endDraw();
+  adfSolver = loadShader("adfSolver.glsl");
+  
+  blur = loadShader("blur.glsl");
   
   videoExport = new VideoExport(this);
   videoExport.setMovieFileName(filename);
@@ -219,8 +239,8 @@ void setup() {
 
 void draw() {
   //println(frameRate);
-  float loopT = frameCount / 250f;
-  t = loopT; // cos(loopT * PI / 2) * 3;
+  float loopT = frameCount / 100f;
+  t = loopT + cos(loopT * PI) * 1; // cos(loopT * PI / 2) * 3;
   movie.read();
   bodies.beginDraw();
   bodies.image(movie, 0, 0);
@@ -262,23 +282,32 @@ void draw() {
   sdfSolver.set("source", source);
   sdfSolver.set("time", millis() / 1000f);
   sdf.beginDraw();
-  for (int i = 0; i < 4; i++) {
+  for (int i = 0; i < 50; i++) {
     sdfSolver.set("diags", i % 2 == 0);
     sdf.filter(sdfSolver);
+    if (!(keyPressed && key == ' ')) {
+      sdf.filter(blur);
+    }
   }
   sdf.endDraw();
   //image(sdf, 0, 0);
   
-  //background(0);
+  //adfSolver.set("source", source);
+  //adf.beginDraw();
+  //adf.filter(adfSolver);
+  //adf.endDraw();
+  //image(adf, 0, 0);
+  
+   //background(0);
   fill(0, 25);
   rect(0, 0, width, height);
   sdf.loadPixels();
-  beginShape(LINES);
-  stroke(255);
+  //beginShape(LINES);
+  //stroke(255);
   for (Runner r : runners) {
     r.run(sdf);
   }
-  endShape();
+  //endShape();
   
   fx.render()
     .bloom(0.5, 20, 30)
