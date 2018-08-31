@@ -9,7 +9,7 @@ import ch.bildspur.postfx.*;
 
 Movie movie;
 
-String filename = "beingoflight22.mp4";
+String filename = "beingoflight23.mp4";
 
 VideoExport videoExport;
 
@@ -87,15 +87,18 @@ class Runner {
   }
   
   void run(PImage source) {
-    x = x0;
-    y = y0;
-    for (int i = 0; i < 10; i++) {
+    //x = x0;
+    //y = y0;
+    //strokeWeight(2);
+    for (int i = 0; i < 3; i++) {
       float bodyValue = h2(x, y, source);
       float dx = 0, dy = 0;
       PVector v = new PVector(h(x, y, t) - 0.5, h(x, y, t + 10) - 0.5);
-      v.mult(bodyValue * 55);
+      v.mult(4);
+      v.rotate(PI * 4 * bodyValue);
       dx += v.x;
       dy += v.y;
+      dx += 15 - bodyValue * 15;
       
       //float ox = x - width/2;
       //float oy = y - height/2;
@@ -106,11 +109,11 @@ class Runner {
         (h2(x + 1, y, source) - h2(x - 1, y, source)) / 2. * 10,
         (h2(x, y + 1, source) - h2(x, y - 1, source)) / 2. * 10
       );
-      v2.rotate(PI);
+      v2.rotate(PI / 2);
       //v2.x += (random(1) - 0.5) * 0.01;
       //v2.y += (random(1) - 0.5) * 0.01;
-      //dx += v2.x * 155;
-      //dy += v2.y * 155;
+      dx += v2.x * 155;
+      dy += v2.y * 155;
       
       dx += vx * 1;
       dy += vy * 1;
@@ -118,7 +121,7 @@ class Runner {
       dx += (random(1) - 0.5);
       dy += (random(1) - 0.5);
 
-      stroke(lerpColor(color(0, 128, 255), color(255, 255, 220), (dx*dx+dy*dy) / 15));
+      stroke(lerpColor(color(164, 59, 41), color(112, 154, 255), bodyValue), 164 + bodyValue * 128);
       beginShape(LINES);
       vertex(x, y);
       x += dx;
@@ -133,14 +136,20 @@ class Runner {
       //  vertex(x, y);
       //}
       vertex(x, y);
-      if (rx < 0 || rx >= width || ry < 0 || ry >= height) {
-        x = x0;
+      if (rx < 0 || rx >= width) {
+        x = 0;
         y = y0;
+        //x = ((x%width)+width)%width;
       }
-      //if (dist(0, 0, dx, dy) < 1) {
-      //  x = x0;
-      //  y = y0;
-      //}
+      if (ry < 0 || ry >= height) {
+        //x = x0;
+        //y = y0;
+        y = ((y%height)+height)%height;
+      }
+      if (dist(0, 0, dx, dy) < 5) {
+        //x = x0;
+        //y = y0;  
+      }
       endShape();
     }
     //vertex(x, y);
@@ -250,7 +259,7 @@ void draw() {
   bodies.filter(dilate);
   bodies.endDraw();
   
-  background(1, 26, 39);
+  background(6, 5, 2);
   
   source.beginDraw();
   source.background(0);
@@ -285,9 +294,7 @@ void draw() {
   for (int i = 0; i < 50; i++) {
     sdfSolver.set("diags", i % 2 == 0);
     sdf.filter(sdfSolver);
-    if (!(keyPressed && key == ' ')) {
-      sdf.filter(blur);
-    }
+    sdf.filter(blur);
   }
   sdf.endDraw();
   //image(sdf, 0, 0);
