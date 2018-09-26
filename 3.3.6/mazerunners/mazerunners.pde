@@ -15,20 +15,20 @@ import java.util.*;
 // makes them go from the start to the goal
 // as fast as possible
 
-// each walker has a "score" that determines how "good"
-// this walker was at achieving the goal.
-// a walker that dies gets a score of 0
-// a walker that hits the goal gets a massive reward 1000
-// a walker that gets closer to the goal gets a bigger reward (e.g. 100 - dist)
-// a walker that reaches the goal earlier gets a bigger reward (100 - time)
+// each runner has a "score" that determines how "good"
+// this runner was at achieving the goal.
+// a runner that dies gets a score of 0
+// a runner that hits the goal gets a massive reward 1000
+// a runner that gets closer to the goal gets a bigger reward (e.g. 100 - dist)
+// a runner that reaches the goal earlier gets a bigger reward (100 - time)
 
-// we start with a ton of walkers, each with randomized movements. 
+// we start with a ton of runners, each with randomized movements. 
 // some of these will be better, some of these will be worse
 // we then create a new generation by taking the top
 // 50% scorers, replicating each of them, and mutating them
 // e.g. changing 10% of the directions
 
-// then we do it again and again and hope the walkers get better
+// then we do it again and again and hope the runners get better
 
 String videoName = "mazerunner_learnedhelplessness.mp4";
 
@@ -50,7 +50,7 @@ boolean[][] obstructed = new boolean[gridWidth][gridHeight];
 //    obstructed[gridWidth-1][y] = true;
 //  }
 //}
-int[] numWalkers = new int[gridWidth * gridHeight];
+int[] numRunners = new int[gridWidth * gridHeight];
 
 Generation gen, prevGen;
 int genNumber = 0;
@@ -102,7 +102,7 @@ void draw() {
   }
   for (int i = 0; i < (isFast ? GEN_LIFETIME : 1); i++) {
     gen.step();
-    for (Walker w : gen.population) {
+    for (Runner w : gen.population) {
       float px = w.x * DS;
       float py = w.y * DS;
       //text((int)w.score(), px, py);
@@ -126,7 +126,7 @@ void draw() {
     float py = y * DS;
     line(0, py, gridWidth * DS, py);
   }
-  //for (Walker w : gen.population) {
+  //for (Runner w : gen.population) {
   //  float px = w.x * DS;
   //  float py = w.y * DS;
   //  text((int)w.score(), px, py);
@@ -136,8 +136,8 @@ void draw() {
   for (int x = 0; x < gridWidth; x++) {
     for (int y = 0; y < gridHeight; y++) {
       if (obstructed[x][y]) {
-        //fill(#f3d210); //yellow obstruction
-        fill(255, 64, 75);
+        fill(#f3d210); //yellow obstruction
+        //fill(255, 64, 75);
         rect(x * DS, y * DS, DS, DS);
       }
     }
@@ -145,7 +145,7 @@ void draw() {
   fill(128, 223, 64);
   rect(goalX * DS, goalY * DS, DS, DS);
   int numAtGoal = 0;
-  for (Walker w : gen.population) {
+  for (Runner w : gen.population) {
     if (w.x == goalX && w.y == goalY) {
       numAtGoal++;
     }
@@ -178,19 +178,19 @@ void drawPrevGenScores() {
   fill(255);
   stroke(255);
   for (int rank = 0; rank < prevGen.population.size(); rank++) {
-    Walker w = prevGen.population.get(rank);
-    drawWalkerScore(w, rank);
+    Runner r = prevGen.population.get(rank);
+    drawRunnerScore(r, rank);
     translate(0, textAscent() + textDescent());
   }
   popMatrix();
 }
 
-void drawWalkerScore(Walker w, int rank) {
-  String text = (rank+1) + ": " + w.score();
+void drawRunnerScore(Runner r, int rank) {
+  String text = (rank+1) + ": " + r.score();
   text(text, 0, 0);
   pushMatrix();
   translate(130, (textAscent() + textDescent()) / 2);
-  drawPath(w.path);
+  drawPath(r.path);
   popMatrix();
 }
 

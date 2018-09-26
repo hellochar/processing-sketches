@@ -1,24 +1,24 @@
 
-enum Status { WALKING, UNFINISHED, DEAD, WON };
+enum Status { RUNNING, UNFINISHED, DEAD, WON };
 
-class Walker implements Comparable<Walker> {
+class Runner implements Comparable<Runner> {
   int x, y, index = 0;
   Direction[] path;
   Status status;
-  Walker(Direction[] path) {
+  Runner(Direction[] path) {
     x = gridWidth/2;
     y = gridHeight - goalY;
     this.path = path;
-    status = Status.WALKING;
+    status = Status.RUNNING;
   }
   
-  int compareTo(Walker other) {
+  int compareTo(Runner other) {
     return Float.compare(score(), other.score());
   }
   
   void step() {
     switch (status) {
-      case WALKING:
+      case RUNNING:
         Direction dir = path[index];
         takeAction(dir);
         index++;
@@ -33,7 +33,7 @@ class Walker implements Comparable<Walker> {
     }
   }
   
-  // go from walking to dead or won
+  // go from running to dead or won
   Status getStatus() {
     if (x == goalX && y == goalY) {
       return Status.WON;
@@ -47,11 +47,11 @@ class Walker implements Comparable<Walker> {
     if (index >= path.length) {
       return Status.UNFINISHED;
     }
-    return Status.WALKING;
+    return Status.RUNNING;
   }
   
   void takeAction(Direction dir) {
-    numWalkers[y * gridWidth + x]--;
+    numRunners[y * gridWidth + x]--;
     int ox = x, oy = y;
     if (dir == Direction.LEFT) {
       x = wrap(x - 1, gridWidth);
@@ -65,14 +65,14 @@ class Walker implements Comparable<Walker> {
       throw new Error("invalid direction" + dir);
     }
     if (y >= 0 && y < gridHeight) {
-      //boolean isInObstacle = obstructed[x][y];
-      boolean isInObstacle = false;
-      boolean isOnAnotherWalker = false; // numWalkers[y * gridWidth + x] > 0;
-      if (isInObstacle || isOnAnotherWalker) {
+      boolean isInObstacle = obstructed[x][y];
+      //boolean isInObstacle = false;
+      boolean isOnAnotherRunner = false; // numRunners[y * gridWidth + x] > 0;
+      if (isInObstacle || isOnAnotherRunner) {
         x = ox;
         y = oy;
       }
-      numWalkers[y * gridWidth + x]++;
+      numRunners[y * gridWidth + x]++;
     }
   }
 
@@ -92,10 +92,10 @@ class Walker implements Comparable<Walker> {
   }
   
   // change 10% of the directions
-  Walker mutate() {
+  Runner mutate() {
     // very small chance - completely rerandom
     if (random(1) < 0.01) {
-      return new Walker(randomPath());
+      return new Runner(randomPath());
     }
     Direction[] newPath = new Direction[path.length];
     arrayCopy(path, newPath);
@@ -104,12 +104,12 @@ class Walker implements Comparable<Walker> {
       int idx = (int)random(0, index);
       newPath[idx] = randomDirection();
     } while (random(1) < continuationChance);
-    return new Walker(newPath);
+    return new Runner(newPath);
   }
   
   // make no mutation, just reset the other state
-  Walker reset() {
-    return new Walker(path);
+  Runner reset() {
+    return new Runner(path);
   }
 }
 

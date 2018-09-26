@@ -1,20 +1,20 @@
 
 class Generation {
-  List<Walker> population;
+  List<Runner> population;
   int age = 0;
-  Generation(List<Walker> population) {
+  Generation(List<Runner> population) {
     this.population = population;
   }
   
   public void step() {
-    Arrays.fill(numWalkers, 0);
-    for (Walker w : population) {
+    Arrays.fill(numRunners, 0);
+    for (Runner w : population) {
       int index = w.y * gridWidth + w.x;
-      if (index >= 0 && index < numWalkers.length) {
-        numWalkers[index]++;
+      if (index >= 0 && index < numRunners.length) {
+        numRunners[index]++;
       }
     }
-    for (Walker w : population) {
+    for (Runner w : population) {
       w.step();
     }
     age++;
@@ -27,10 +27,10 @@ class Generation {
     // that's the new population
     //population.sort(null);
     Collections.sort(population, Collections.reverseOrder());
-    List<Walker> topHalf = population.subList(0, population.size() / 2);
-    //List<Walker> topHalfMutated = new ArrayList(topHalf.size());
-    List<Walker> nextGen = new ArrayList(population.size());
-    for (Walker w : topHalf) {
+    List<Runner> topHalf = population.subList(0, population.size() / 2);
+    //List<Runner> topHalfMutated = new ArrayList(topHalf.size());
+    List<Runner> nextGen = new ArrayList(population.size());
+    for (Runner w : topHalf) {
       nextGen.add(w.reset());
       nextGen.add(w.mutate());
     }
@@ -39,10 +39,10 @@ class Generation {
 }
 
 public Generation randomGeneration() {
-  List<Walker> generation = new ArrayList();
+  List<Runner> generation = new ArrayList();
   for (int i = 0; i < 30; i++) {
-    Walker walker = new Walker(randomPath());
-    generation.add(walker);
+    Runner runner = new Runner(randomPath());
+    generation.add(runner);
   }
   return new Generation(generation);
 }
