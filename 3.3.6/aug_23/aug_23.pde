@@ -1,3 +1,5 @@
+import com.hamoid.*;
+
 import java.util.*;
 
 // AI pathfinding/learning, with a "rock paper scissors" component
@@ -28,183 +30,46 @@ import java.util.*;
 
 // then we do it again and again and hope the walkers get better
 
-int gridWidth = 40, gridHeight = 40;
+String videoName = "mazerunner_learnedhelplessness.mp4";
 
-int goalX = gridWidth/2, goalY = 10;
+float continuationChance = 0.1;
 
-enum Direction { LEFT, RIGHT, UP, DOWN };
-Direction[] DIRECTIONS = Direction.values();
-
-enum Status { WALKING, UNFINISHED, DEAD, WON };
-
-class Walker implements Comparable<Walker> {
-  int x, y, index = 0;
-  Direction[] path;
-  Status status;
-  Walker(Direction[] path) {
-    x = gridWidth/2;
-    y = gridHeight - goalY;
-    this.path = path;
-    status = Status.WALKING;
-  }
-  
-  int compareTo(Walker other) {
-    return Float.compare(score(), other.score());
-  }
-  
-  void step() {
-    switch (status) {
-      case WALKING:
-        Direction dir = path[index];
-        takeAction(dir);
-        index++;
-        status = getStatus();
-        break;
-      
-      // these are all "end of generation" statuses
-      case UNFINISHED:
-      case DEAD:
-      case WON:
-      break;
-    }
-  }
-  
-  // go from walking to dead or won
-  Status getStatus() {
-    if (x == goalX && y == goalY) {
-      return Status.WON;
-    }
-    if (y < 0 || y >= gridHeight) {
-      return Status.DEAD;
-    }
-    if (obstructed[x][y]) {
-      return Status.DEAD;
-    }
-    if (index >= path.length) {
-      return Status.UNFINISHED;
-    }
-    return Status.WALKING;
-  }
-  
-  void takeAction(Direction dir) {
-    if (dir == Direction.LEFT) {
-      x = wrap(x - 1, gridWidth);
-    } else if (dir == Direction.RIGHT) {
-      x = wrap(x + 1, gridWidth);
-    } else if (dir == Direction.UP) {
-      y -= 1;
-    } else if (dir == Direction.DOWN) {
-      y += 1;
-    } else {
-      throw new Error("invalid direction" + dir);
-    }
-  }
-
-  // higher score = better
-  float score() {
-    float d = dist(goalX, goalY, x, y);
-    
-    float scoreAtGoal = d == 0 ? 1000 : 0;
-    float scoreCloseToGoal = -d * 2;
-    float scoreTime =
-      status == Status.DEAD ? index * 0.1 :
-      status == Status.WON ? (index * -0.1) :
-      0;
-    float scoreDead = status == status.DEAD ? -1000 : 0;
-    
-    return scoreAtGoal + scoreCloseToGoal + scoreTime + scoreDead;
-  }
-  
-  // change 10% of the directions
-  Walker mutate() {
-    // very small chance - completely rerandom
-    if (random(1) < 0.01) {
-      return new Walker(randomPath());
-    }
-    Direction[] newPath = new Direction[path.length];
-    arrayCopy(path, newPath);
-    while(random(1) > 0.1) {
-      int idx = (int)random(0, newPath.length);
-      newPath[idx] = randomDirection();
-    }
-    return new Walker(newPath);
-  }
-  
-  // make no mutation, just reset the other state
-  Walker reset() {
-    return new Walker(path);
-  }
-}
-
-int wrap(int k, int w) {
-  return ((k % w) + w) % w;
-}
-
-Direction randomDirection() {
-  return DIRECTIONS[(int)random(0, DIRECTIONS.length)];
-}
-
-Direction[] randomPath() {
-  Direction[] path = new Direction[GEN_LIFETIME];
-  for (int i = 0; i < GEN_LIFETIME; i++) { 
-    path[i] = randomDirection();
-  }
-  return path;
-}
+final int GEN_LIFETIME = 500;
+final int gridWidth = 30, gridHeight = 30;
+final int goalX = gridWidth/2, goalY = 5;
 
 boolean[][] obstructed = new boolean[gridWidth][gridHeight];
+// surround the perimeter with obstructions
+//{
+//  for(int x = 0; x < gridWidth; x++) {
+//    obstructed[x][0] = true;
+//    obstructed[x][gridHeight-1] = true;
+//  }
+//  for(int y = 0; y < gridHeight; y++) {
+//    obstructed[0][y] = true;
+//    obstructed[gridWidth-1][y] = true;
+//  }
+//}
+int[] numWalkers = new int[gridWidth * gridHeight];
 
-class Generation {
-  List<Walker> population;
-  int age = 0;
-  Generation(List<Walker> population) {
-    this.population = population;
-  }
-  
-  public void step() {
-    for (Walker w : population) {
-      w.step();
-    }
-    age++;
-  }
-  
-  public Generation nextGeneration() {
-    // sort the current population by fitness
-    // take the top half
-    // copy the top half, mutating each one
-    // that's the new population
-    //population.sort(null);
-    Collections.sort(population, Collections.reverseOrder());
-    List<Walker> topHalf = population.subList(0, population.size() / 2);
-    //List<Walker> topHalfMutated = new ArrayList(topHalf.size());
-    List<Walker> nextGen = new ArrayList(population.size());
-    for (Walker w : topHalf) {
-      nextGen.add(w.reset());
-      nextGen.add(w.mutate());
-    }
-    return new Generation(nextGen);
-  }
-}
+Generation gen, prevGen;
+int genNumber = 0;
 
-public Generation randomGeneration() {
-  List<Walker> generation = new ArrayList();
-  for (int i = 0; i < 50; i++) {
-    Walker walker = new Walker(randomPath());
-    generation.add(walker);
-  }
-  return new Generation(generation);
-}
+float DS;
 
-Generation gen;
-final int GEN_LIFETIME = 500;
+VideoExport export;
 
 void setup() {
   size(800, 800, P2D);
   smooth(8);
+  DS = (float)width / gridWidth;
   gen = randomGeneration();
+  export = new VideoExport(this, videoName);
+  export.setFrameRate(30);
+  export.startMovie();
+  frameRate(30);
 }
 
-float DS = 20;
 
 void mouseDragged() {
   int ix = (int)(mouseX / DS);
@@ -214,25 +79,40 @@ void mouseDragged() {
   }
 }
 
+boolean isFast = true;
+
+void keyPressed() {
+  if (key == ' ') {
+    isFast = !isFast;
+  }
+}
+
 void draw() {
+  //boolean isFast = false; // !(keyPressed && key == ' ');
   background(1, 26, 39);
-  //fill(1, 26, 39, 2);
+  //fill(1, 26, 39, 20);
   //noStroke();
   //rect(0, 0, width, height);
-  for (int i = 0; i < (keyPressed ? 1 : 20); i++) {
-    gen.step();
-    //for (Walker w : gen.population) {
-    //  float px = w.x * DS;
-    //  float py = w.y * DS;
-    //  //text((int)w.score(), px, py);
-    //  //fill(#fcfdf1, 64);
-    //  fill(#fcfdf1);
-    //  //fill(lerpColor(color(255, 64, 64), color(64, 255, 64), (20 + w.score()) / 20), 12);
-    //  ellipse(px + DS/2, py + DS/2, DS, DS);
-    //}
-  }
+  //goalX = (int)map(sin(frameCount / 60f), -1, 1, 0, gridWidth);
+  
   if (gen.age >= GEN_LIFETIME) {
+    prevGen = gen;
     gen = gen.nextGeneration();
+    genNumber++;
+  }
+  for (int i = 0; i < (isFast ? GEN_LIFETIME : 1); i++) {
+    gen.step();
+    for (Walker w : gen.population) {
+      float px = w.x * DS;
+      float py = w.y * DS;
+      //text((int)w.score(), px, py);
+      //blendMode(ADD);
+      fill(#fcfdf1, isFast ? 12 : 128);
+      noStroke();
+      //fill(#fcfdf1);
+      //fill(lerpColor(color(255, 64, 64), color(64, 255, 64), (20 + w.score()) / 20), 12);
+      ellipse(px + DS/2, py + DS/2, DS, DS);
+    }
   }
   
   // draw grid
@@ -246,22 +126,82 @@ void draw() {
     float py = y * DS;
     line(0, py, gridWidth * DS, py);
   }
-  for (Walker w : gen.population) {
-    float px = w.x * DS;
-    float py = w.y * DS;
-    text((int)w.score(), px, py);
-    fill(#fcfdf1);
-    ellipse(px + DS/2, py + DS/2, DS, DS);
-  }
+  //for (Walker w : gen.population) {
+  //  float px = w.x * DS;
+  //  float py = w.y * DS;
+  //  text((int)w.score(), px, py);
+  //  fill(#fcfdf1);
+  //  ellipse(px + DS/2, py + DS/2, DS, DS);
+  //}
   for (int x = 0; x < gridWidth; x++) {
     for (int y = 0; y < gridHeight; y++) {
       if (obstructed[x][y]) {
-        fill(#f3d210);
+        //fill(#f3d210); //yellow obstruction
+        fill(255, 64, 75);
         rect(x * DS, y * DS, DS, DS);
       }
     }
   }
-  fill(255, 128, 0);
+  fill(128, 223, 64);
   rect(goalX * DS, goalY * DS, DS, DS);
+  int numAtGoal = 0;
+  for (Walker w : gen.population) {
+    if (w.x == goalX && w.y == goalY) {
+      numAtGoal++;
+    }
+  }
+  if (numAtGoal > 0) {
+    fill(255);
+    textSize(24);
+    textAlign(CENTER, CENTER);
+    text(numAtGoal, (goalX+0.5)*DS, (goalY + 0.5) * DS);
+  }
+  
   //frameRate(10);
+  fill(255, 255, 0);
+  rect(0, 0, map(gen.age, 0, GEN_LIFETIME, 0, width), 10);
+  textAlign(LEFT, TOP);
+  textSize(16);
+  fill(255);
+  text("Generation " + genNumber, 0, 10);
+  if (keyPressed && key == 'i') {
+    drawPrevGenScores();
+  }
+  export.saveFrame();
+}
+
+void drawPrevGenScores() {
+  if (prevGen == null) return;
+  pushMatrix();
+  fill(0, 192);
+  rect(0, 0, width, height);
+  fill(255);
+  stroke(255);
+  for (int rank = 0; rank < prevGen.population.size(); rank++) {
+    Walker w = prevGen.population.get(rank);
+    drawWalkerScore(w, rank);
+    translate(0, textAscent() + textDescent());
+  }
+  popMatrix();
+}
+
+void drawWalkerScore(Walker w, int rank) {
+  String text = (rank+1) + ": " + w.score();
+  text(text, 0, 0);
+  pushMatrix();
+  translate(130, (textAscent() + textDescent()) / 2);
+  drawPath(w.path);
+  popMatrix();
+}
+
+void drawPath(Direction[] path) {
+  for (Direction d : path) {
+    drawDirection(d);
+    translate(12, 0);
+  }
+}
+
+void exit() {
+  export.endMovie();
+  super.exit();
 }
