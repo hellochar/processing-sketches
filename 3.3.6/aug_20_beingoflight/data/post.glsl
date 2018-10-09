@@ -105,6 +105,7 @@ float random(vec2 n, float offset ){
 void main(void) {
     // chromatic abberation
     vec3 totalColor = chromaticAbberation();
+    totalColor += vec3(1., 26., 39.) / 255.;
 
     // bit of vignetting
     float vignetteAmount = vignette();
