@@ -76,7 +76,7 @@ vec4 spectrum_offset( float t ) {
 
 vec3 chromaticAbberation() {
     const float max_distort = 0.2;
-    const int num_iter = 12;
+    const int num_iter = 4;
     const float reci_num_iter_f = 1.0 / float(num_iter);
 
     vec2 uv=(vertTexCoord.xy*.8)+.10;

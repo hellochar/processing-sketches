@@ -38,11 +38,6 @@ PGraphics sdf;
 // into new sdf
 PShader sdfSolver;
 
-PGraphics adf;
-// Shader converts:
-// source image
-// into distance field analytically
-PShader adfSolver;
 PShader blur;
 
 PostFX fx;
@@ -61,9 +56,10 @@ float h(float x, float y, float t) {
   return noise(x / s, y / s, t);
 }
 float h2(float x, float y, PImage src) {
-  int rx = round(x);
-  int ry = round(y);
-  if (rx < 0 || rx >= width || ry < 0 || ry >= height) {
+  // downscale to src's width/height
+  int rx = round(x / 2);
+  int ry = round(y / 2);
+  if (rx < 0 || rx >= src.width || ry < 0 || ry >= src.height) {
     return 0;
   } else {
     int index = ry * src.width + rx;
@@ -85,6 +81,8 @@ class Runner {
     this.vx = vx;
     this.vy = vy;
   }
+  PVector v = new PVector();
+  PVector v2 = new PVector();
   
   void run(PImage source) {
     //x = x0;
@@ -93,7 +91,7 @@ class Runner {
     for (int i = 0; i < 3; i++) {
       float bodyValue = h2(x, y, source);
       float dx = 0, dy = 0;
-      PVector v = new PVector(h(x, y, t) - 0.5, h(x, y, t + 10) - 0.5);
+      v.set(h(x, y, t) - 0.5, h(x, y, t + 10) - 0.5);
       v.mult(4);
       v.rotate(PI * 4 * bodyValue);
       dx += v.x;
@@ -105,15 +103,13 @@ class Runner {
       //dx += ox * 0.001;
       //dy += oy * 0.001;
       
-      PVector v2 = new PVector(
+      v2.set(
         (h2(x + 1, y, source) - h2(x - 1, y, source)) / 2. * 10,
         (h2(x, y + 1, source) - h2(x, y - 1, source)) / 2. * 10
       );
       v2.rotate(PI / 2);
-      //v2.x += (random(1) - 0.5) * 0.01;
-      //v2.y += (random(1) - 0.5) * 0.01;
-      dx += v2.x * 155;
-      dy += v2.y * 155;
+      dx += v2.x * 555;
+      dy += v2.y * 555;
       
       dx += vx * 1;
       dy += vy * 1;
@@ -122,19 +118,11 @@ class Runner {
       dy += (random(1) - 0.5);
 
       stroke(lerpColor(color(164, 59, 41), color(112, 154, 255), bodyValue), 164 + bodyValue * 128);
-      beginShape(LINES);
       vertex(x, y);
       x += dx;
       y += dy;
       int rx = round(x);
       int ry = round(y);
-      //int index = ry * source.width + rx;
-      //    red(source.pixels[index]) > 0) {
-      //  vertex(x, y);  
-      //  x = x0;
-      //  y = y0;
-      //  vertex(x, y);
-      //}
       vertex(x, y);
       if (rx < 0 || rx >= width) {
         x = 0;
@@ -150,110 +138,52 @@ class Runner {
         //x = x0;
         //y = y0;  
       }
-      endShape();
+      //endShape();
     }
     //vertex(x, y);
   }
 }
 
 void setup() {
-  size(1280, 720, P2D);
-  
-  //for (int y = 0; y < height; y += 2) {
-  //  runners.add(new Runner(0, y, 1));
-  //  runners.add(new Runner(width-1, y, -1));
-  //}
+  size(displayWidth, displayHeight, P2D);
   for (int i = 0; i < 2000; i++) {
     //float angle = i * TWO_PI / 1000;
     //runners.add(new Runner(width/2 + cos(angle) * 250, height/2 + sin(angle) * 250, -cos(angle), -sin(angle)));
     runners.add(new Runner(random(width), random(height), 0, 0));
     //runners.add(new Runner(map(i, 0, 200, 0, width), height * 0.99, 0, -1));
   }
-  //kinect = new KinectPV2(this);
-  //kinect.enableDepthMaskImg(true);
-  //kinect.init();
+  kinect = new KinectPV2(this);
+  kinect.enableDepthMaskImg(true);
+  kinect.init();
   bodies = createGraphics(KinectPV2.WIDTHDepth, KinectPV2.HEIGHTDepth, P2D);
   kinectToSourceDrawer = loadShader("kinectToSourceDrawer.glsl");
   erode = loadShader("erode.glsl");
   dilate = loadShader("dilate.glsl");
   
-  source = createGraphics(width, height, P2D);
+  source = createGraphics(width/2, height/2, P2D);
   source.noSmooth();
   edgeHighlighter = loadShader("edgeHighlighter.glsl");
   
-  sdf = createGraphics(width, height, P2D);
+  sdf = createGraphics(source.width, source.height, P2D);
   sdf.noSmooth();
   sdf.beginDraw();
   sdf.background(0);
   sdf.endDraw();
   sdfSolver = loadShader("sdfSolver.glsl");
   
-  adf = createGraphics(width, height, P2D);
-  adf.noSmooth();
-  adf.beginDraw();
-  adf.background(0);
-  adf.endDraw();
-  adfSolver = loadShader("adfSolver.glsl");
-  
   blur = loadShader("blur.glsl");
-  
-  videoExport = new VideoExport(this);
-  videoExport.setMovieFileName(filename);
-  videoExport.setFfmpegVideoSettings(
-    new String[]{
-      "[ffmpeg]",                       // ffmpeg executable
-      "-y",                             // overwrite old file
-      "-f", "rawvideo",                 // format rgb raw
-      "-vcodec", "rawvideo",            // in codec rgb raw
-      "-s", "[width]x[height]",         // size
-      "-pix_fmt", "rgb24",              // pix format rgb24
-      "-r", "[fps]",                    // frame rate
-      "-i", "-",                        // pipe input
-      "-an",                            // no audio
-      "-vcodec", "h264",                // out codec h264
-      "-movflags",
-      "+faststart",
-      "-pix_fmt", "yuv420p",            // color space yuv420p
-      "-preset", "fast",
-      "-profile", "main",
-      "-crf", "24",                  // quality
-      "-metadata", "comment=[comment]", // comment
-      "[output]"                        // output file
-    }
-  );
-  videoExport.startMovie();
   
   fx = new PostFX(this);
   post = loadShader("post.glsl");
-
-  frameRate(30);
   
   pos = new PVector(width/2, height/2);
-  movie = new Movie(this, "depthMask.mp4");
-  movie.loop();
-  movie.speed(0.5);
-  //movie.frameRate(10);
-  
-  src = loadImage("johannes-plenio-629984-unsplash-small.jpg");
-  sortedImage = createGraphics(width, height, P2D);
-  sortedImage.beginDraw();
-  sortedImage.image(src, 0, 0);
-  sortedImage.endDraw();
-  pixelSortShader = loadShader("pixelSort.glsl");
 }
 
-//void movieEvent(Movie m) {
-//  m.read();
-//}
-
 void draw() {
-  //println(frameRate);
   float loopT = frameCount / 100f;
   t = loopT + cos(loopT * PI) * 1; // cos(loopT * PI / 2) * 3;
-  movie.read();
   bodies.beginDraw();
-  bodies.image(movie, 0, 0);
-  //bodies.image(kinect.getBodyTrackImage(), 0, 0);
+  bodies.image(kinect.getBodyTrackImage(), 0, 0);
   bodies.filter(kinectToSourceDrawer);
   bodies.filter(erode);
   bodies.filter(dilate);
@@ -264,34 +194,15 @@ void draw() {
   source.beginDraw();
   source.background(0);
   source.imageMode(CENTER);
-  source.image(bodies, width/2, height/2, width, height);
-  source.noFill();
-  source.stroke(255);
-  source.strokeWeight(50);
-  //source.rectMode(CENTER);
-  //source.rect(width/2, height/2, bodies.width - 2, bodies.height - 2);
-  //for (int x = 0; x < width; x += 100) {
-  //  source.line(
-  //    x, 0,
-  //    x, height
-  //  );
-  //}
-  //for (int y = 0; y < height; y += 100) {
-  //  source.line(
-  //    0, y,
-  //    width, y
-  //  );
-  //}
+  source.image(bodies, source.width/2, source.height/2, source.width, source.height);
   source.filter(edgeHighlighter);
-  //source.filter(edgeHighlighter);
-  //source.filter(edgeHighlighter);
   source.endDraw();
-  //image(source, 0, 0);
+  //image(source, 0, 0, width, height);
   
   sdfSolver.set("source", source);
   sdfSolver.set("time", millis() / 1000f);
   sdf.beginDraw();
-  for (int i = 0; i < 50; i++) {
+  for (int i = 0; i < 40; i++) {
     sdfSolver.set("diags", i % 2 == 0);
     sdf.filter(sdfSolver);
     sdf.filter(blur);
@@ -299,46 +210,32 @@ void draw() {
   sdf.endDraw();
   //image(sdf, 0, 0);
   
-  //adfSolver.set("source", source);
-  //adf.beginDraw();
-  //adf.filter(adfSolver);
-  //adf.endDraw();
-  //image(adf, 0, 0);
-  
    //background(0);
-  fill(0, 25);
-  rect(0, 0, width, height);
+  //fill(0, 25);
+  //rect(0, 0, width, height);
+  
+  beginShape(LINES);
   sdf.loadPixels();
-  //beginShape(LINES);
-  //stroke(255);
   for (Runner r : runners) {
     r.run(sdf);
   }
-  //endShape();
+  endShape();
   
   fx.render()
     .bloom(0.5, 20, 30)
     .compose();
   post.set("time", millis() / 1000f);
   filter(post);
-  
-  //sortedImage.beginDraw();
-  //sortedImage.image(src, 0, 0);
-  //pixelSortShader.set("sdf", sdf);
-  //for (int i = 0; i < 20*sin(frameCount / 20f) + 20; i++) {
-  //  sortedImage.filter(pixelSortShader);
-  //}
-  //sortedImage.endDraw();
-  //image(sortedImage, 0, 0);
 
   fill(255);
   textAlign(LEFT, TOP);
   text(frameCount, 0, 0);
   
-  videoExport.saveFrame();
+  println(frameRate);
+  //videoExport.saveFrame();
 }
 
 void exit() {
-  videoExport.endMovie();
+  //videoExport.endMovie();
   super.exit();
 }
