@@ -1,4 +1,4 @@
-Config c20 = new Config(color(1, 26, 39)) {
+Config c20 = new Config(color(6,18,131)) {
   void init() {
     runners.clear();
     for (int i = 0; i < 2000; i++) {
@@ -8,9 +8,10 @@ Config c20 = new Config(color(1, 26, 39)) {
   }
 
   void update(Runner r, PImage source) {
-    stroke(255);
+    stroke(255,220,16);
     r.x = r.x0;
     r.y = r.y0;
+    float f = sin(t * 2);
     for (int i = 0; i < 10; i++) {
       float x = r.x, y = r.y, vx = r.vx, vy = r.vy, x0 = r.x0, y0 = r.y0;
       vertex(x, y);
@@ -32,8 +33,8 @@ Config c20 = new Config(color(1, 26, 39)) {
       //v2.rotate(PI/2 * 0.99);
       //v2.x += (random(1) - 0.5) * 0.01;
       //v2.y += (random(1) - 0.5) * 0.01;
-      dx += v2.x * 155;
-      dy += v2.y * 155;
+      dx += v2.x * 255 * f;
+      dy += v2.y * 255 * f;
 
       dx += vx * 1;
       dy += vy * 1;

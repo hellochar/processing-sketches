@@ -8,6 +8,7 @@ precision mediump int;
 uniform float time;
 uniform sampler2D texture;
 uniform vec2 texOffset;
+uniform vec3 background;
 
 varying vec4 vertColor;
 varying vec4 vertTexCoord;
@@ -105,7 +106,7 @@ float random(vec2 n, float offset ){
 void main(void) {
     // chromatic abberation
     vec3 totalColor = chromaticAbberation();
-    totalColor += vec3(1., 26., 39.) / 255.;
+    totalColor += background; // vec3(1., 26., 39.) / 255.;
 
     // bit of vignetting
     float vignetteAmount = vignette();

@@ -87,7 +87,7 @@ class Runner {
 
 void setup() {
   size(displayWidth, displayHeight, P2D);
-  configs = new Config[] { c16, c17, c20, c22, c23 };
+  configs = new Config[] { c16, c165, c17, c20, c22, c23 };
   kinect = new KinectPV2(this);
   kinect.enableDepthMaskImg(true);
   kinect.init();
@@ -133,7 +133,7 @@ void mousePressed() {
 }
 
 void draw() {
-  if( millis() - timeSwitched > 15 * 1000 ) {
+  if( millis() - timeSwitched > 35 * 1000 ) {
     setConfig((cIndex + 1) % configs.length);
   }
   float loopT = frameCount / 100f;
@@ -181,13 +181,14 @@ void draw() {
     .bloom(0.5, 20, 30)
     .compose();
   post.set("time", millis() / 1000f);
+  post.set("background", (float)red(config.bg) / 255., (float)green(config.bg) / 255., (float)blue(config.bg) / 255.);
   filter(post);
 
-  fill(255);
-  textAlign(LEFT, TOP);
-  text(frameCount, 0, 0);
+  //fill(255);
+  //textAlign(LEFT, TOP);
+  //text(frameCount, 0, 0);
 
-  println(frameRate);
+  //println(frameRate);
   //videoExport.saveFrame();
 }
 

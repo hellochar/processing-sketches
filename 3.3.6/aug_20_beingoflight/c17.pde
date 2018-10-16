@@ -1,4 +1,4 @@
-Config c17 = new Config(color(1, 26, 39)) {
+Config c17 = new Config(color(3 / 3, 6 / 1.2, 8 / 1.2)) {
   void init() {
     runners.clear();
     for (int i = 0; i < 1000; i++) {
@@ -10,15 +10,16 @@ Config c17 = new Config(color(1, 26, 39)) {
   }
 
   void update(Runner r, PImage source) {
-    stroke(255);
+    colorMode(HSB);
+    strokeWeight(3);
     for (int i = 0; i < 12; i++) {
       float x = r.x, y = r.y, vx = r.vx, vy = r.vy, x0 = r.x0, y0 = r.y0;
 
       float dx = 0, dy = 0;
       v.set(h(x, y, t) - 0.5, h(x, y, t + 10) - 0.5);
-      v.mult(5);
-      dx += v.x;
-      dy += v.y;
+      v.mult(1);
+      //dx += v.x;
+      //dy += v.y;
 
       //float ox = x - width/2;
       //float oy = y - height/2;
@@ -32,15 +33,19 @@ Config c17 = new Config(color(1, 26, 39)) {
       v2.rotate(PI / 2 * 0.99);
       //v2.x += (random(1) - 0.5) * 0.01;
       //v2.y += (random(1) - 0.5) * 0.01;
-      dx += v2.x * 525;
-      dy += v2.y * 525;
+      dx += v2.x * 25;
+      dy += v2.y * 25;
 
-      dx += vx * 2;
-      dy += vy * 2;
+      //dx += vx * 1;
+      //dy += vy * 1;
 
       //dx += random(1) - 0.5;
       //dy += random(1) - 0.5;
 
+      
+    //stroke(231, 161, 54);
+      stroke(map(atan2(dy, dx), -PI, PI, 0, 255), 220, 93);
+      vertex(x, y);
       x += dx;
       y += dy;
       int rx = round(x);
@@ -53,7 +58,7 @@ Config c17 = new Config(color(1, 26, 39)) {
       //  vertex(x, y);
       //}
       vertex(x, y);
-      if (rx < 0 || rx >= width || ry < 0 || ry >= height || dist(0, 0, dx, dy) < 3) {
+      if (rx < 0 || rx >= width || ry < 0 || ry >= height) {
         x = x0;
         y = y0;
       }
@@ -61,5 +66,7 @@ Config c17 = new Config(color(1, 26, 39)) {
       r.x = x; 
       r.y = y;
     }
+    colorMode(RGB);
+    strokeWeight(1);
   }
 };
