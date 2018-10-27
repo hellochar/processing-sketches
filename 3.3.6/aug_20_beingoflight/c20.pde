@@ -33,8 +33,8 @@ Config c20 = new Config(color(6,18,131)) {
       //v2.rotate(PI/2 * 0.99);
       //v2.x += (random(1) - 0.5) * 0.01;
       //v2.y += (random(1) - 0.5) * 0.01;
-      dx += v2.x * 255 * f;
-      dy += v2.y * 255 * f;
+      dx += v2.x * 555 * f;
+      dy += v2.y * 555 * f;
 
       dx += vx * 1;
       dy += vy * 1;
@@ -61,5 +61,9 @@ Config c20 = new Config(color(6,18,131)) {
       
       r.x = x; r.y = y;
     }
+  }
+  
+  void draw() {
+    defaultDraw(false);
   }
 };

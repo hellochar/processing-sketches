@@ -8,4 +8,7 @@ abstract class Config {
 
   abstract void init();
   abstract void update(Runner r, PImage source);
+  void draw() {
+    defaultDraw(true);
+  }
 }

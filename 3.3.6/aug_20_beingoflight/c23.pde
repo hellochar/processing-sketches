@@ -1,8 +1,8 @@
 Config c23 = new Config(color(6, 5, 2)) {
-  
+  int z = 1;
   void init() {
     runners.clear();
-    for (int i = 0; i < 2000; i++) {
+    for (int i = 0; i < 5000; i++) {
       runners.add(new Runner(random(width), random(height), 0, 0));
     }
     sdfSolver.set("falloff", 1.0);
@@ -38,6 +38,9 @@ Config c23 = new Config(color(6, 5, 2)) {
 
       dx += (random(1) - 0.5);
       dy += (random(1) - 0.5);
+      
+      //dx *= 3;
+      //dy *= 3;
 
       stroke(lerpColor(color(164, 59, 41), color(112, 154, 255), bodyValue), 164 + bodyValue * 128);
       vertex(x, y);

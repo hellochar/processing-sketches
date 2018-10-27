@@ -1,9 +1,16 @@
 Config c17 = new Config(color(3 / 3, 6 / 1.2, 8 / 1.2)) {
   void init() {
     runners.clear();
-    for (int i = 0; i < 1000; i++) {
+    for (int i = 0; i < 5000; i++) {
       float angle = i * TWO_PI / 1000;
-      runners.add(new Runner(width/2 + cos(angle) * 350, height/2 + sin(angle) * 350, -cos(angle), -sin(angle)));
+      runners.add(new Runner(
+        random(width),
+        random(height),
+        //width/2 + cos(angle) * 350,
+        //height/2 + sin(angle) * 350,
+        -cos(angle),
+        -sin(angle))
+      );
     }
     sdfSolver.set("falloff", 1.0);
 
@@ -12,12 +19,12 @@ Config c17 = new Config(color(3 / 3, 6 / 1.2, 8 / 1.2)) {
   void update(Runner r, PImage source) {
     colorMode(HSB);
     strokeWeight(3);
-    for (int i = 0; i < 12; i++) {
+    for (int i = 0; i < 3; i++) {
       float x = r.x, y = r.y, vx = r.vx, vy = r.vy, x0 = r.x0, y0 = r.y0;
 
       float dx = 0, dy = 0;
       v.set(h(x, y, t) - 0.5, h(x, y, t + 10) - 0.5);
-      v.mult(1);
+      v.mult(4);
       //dx += v.x;
       //dy += v.y;
 
@@ -33,8 +40,8 @@ Config c17 = new Config(color(3 / 3, 6 / 1.2, 8 / 1.2)) {
       v2.rotate(PI / 2 * 0.99);
       //v2.x += (random(1) - 0.5) * 0.01;
       //v2.y += (random(1) - 0.5) * 0.01;
-      dx += v2.x * 25;
-      dy += v2.y * 25;
+      dx += v2.x * 200;
+      dy += v2.y * 200;
 
       //dx += vx * 1;
       //dy += vy * 1;

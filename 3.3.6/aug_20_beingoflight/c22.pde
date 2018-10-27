@@ -1,4 +1,4 @@
-Config c22 = new Config(color(1, 26, 39)) {
+Config c22 = new Config(color(1, 3, 2)) {
   void init() {
     runners.clear();
     for (int i = 0; i < 2000; i++) {
@@ -9,7 +9,6 @@ Config c22 = new Config(color(1, 26, 39)) {
   }
 
   void update(Runner r, PImage source) {
-    stroke(255);
     r.x = r.x0;
     r.y = r.y0;
     for (int i = 0; i < 10; i++) {
@@ -17,7 +16,7 @@ Config c22 = new Config(color(1, 26, 39)) {
       float bodyValue = h2(x, y, source);
       float dx = 0, dy = 0;
       v.set(h(x, y, t) - 0.5, h(x, y, t + 10) - 0.5);
-      v.mult(bodyValue * 55);
+      v.mult(bodyValue * 255);
       dx += v.x;
       dy += v.y;
       
@@ -42,7 +41,7 @@ Config c22 = new Config(color(1, 26, 39)) {
       dx += (random(1) - 0.5);
       dy += (random(1) - 0.5);
 
-      stroke(lerpColor(color(0, 128, 255), color(255, 255, 220), (dx*dx+dy*dy) / 15));
+      stroke(lerpColor(color(0, 128, 255), color(255, 255, 220), (dx*dx+dy*dy) / 15), dist(0, 0, dx, dy) * 10);
       vertex(x, y);
       x += dx;
       y += dy;

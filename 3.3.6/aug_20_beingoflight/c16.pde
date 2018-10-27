@@ -1,4 +1,4 @@
-Config c16 = new Config(color(1, 26, 39)) {
+Config c16 = new Config(color(0)) {
   void init() {
     runners.clear();
     for (int i = 0; i < 1000; i++) {

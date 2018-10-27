@@ -85,12 +85,24 @@ class Runner {
   }
 }
 
+Movie movie;
+
 void setup() {
-  size(displayWidth, displayHeight, P2D);
-  configs = new Config[] { c16, c165, c17, c20, c22, c23 };
-  kinect = new KinectPV2(this);
-  kinect.enableDepthMaskImg(true);
-  kinect.init();
+  size(1280, 800, P2D);
+  //pixelDensity(1);
+  textureWrap(REPEAT);
+
+  configs = new Config[] { c16, c165, c17, c20, c22, c23, c24, c25, c26, cg1 };
+
+  //kinect = new KinectPV2(this);
+  //kinect.enableDepthMaskImg(true);
+  //kinect.init();
+  
+  if (kinect == null) {
+    movie = new Movie(this, "depthMask.mp4");
+    movie.loop();
+  }
+  
   bodies = createGraphics(KinectPV2.WIDTHDepth, KinectPV2.HEIGHTDepth, P2D);
   kinectToSourceDrawer = loadShader("kinectToSourceDrawer.glsl");
   erode = loadShader("erode.glsl");
@@ -115,6 +127,8 @@ void setup() {
 
   pos = new PVector(width/2, height/2);
   setConfig(0);
+  frameRate(30);
+  noCursor();
 }
 
 int timeSwitched = 0;
@@ -129,7 +143,57 @@ void setConfig(int configIndex) {
 }
 
 void mousePressed() {
-  setConfig((cIndex + 1) % configs.length);
+  if (mouseButton == LEFT) {
+    setConfig((cIndex + 1) % configs.length);
+  } else {
+    setConfig(((cIndex - 1) + configs.length) % configs.length);
+  }
+}
+
+PGraphics calcBodiesTexture() {
+  bodies.beginDraw();
+  if (kinect != null) {
+    bodies.image(kinect.getBodyTrackImage(), 0, 0);
+  } else {
+    bodies.image(movie, 0, 0);
+  }
+  bodies.filter(kinectToSourceDrawer);
+  bodies.filter(erode);
+  bodies.filter(dilate);
+  bodies.endDraw();
+  return bodies;
+}
+
+PGraphics calcSourceTexture() {
+  source.beginDraw();
+  source.background(0);
+  source.imageMode(CENTER);
+  source.image(bodies, source.width/2, source.height/2, source.width, source.height);
+  source.filter(edgeHighlighter);
+  source.endDraw();
+  return source;
+}
+
+PGraphics calcSdfTexture(int times) {
+  sdfSolver.set("source", source);
+  sdfSolver.set("time", millis() / 1000f);
+  sdf.beginDraw();
+  for (int i = 0; i < times; i++) {
+    sdfSolver.set("diags", i % 2 == 0);
+    sdf.filter(sdfSolver);
+    sdf.filter(blur);
+  }
+  sdf.endDraw();
+  return sdf;
+}
+
+void updateRunners() {
+  beginShape(LINES);
+  sdf.loadPixels();
+  for (Runner r : runners) {
+    r.run(sdf);
+  }
+  endShape();
 }
 
 void draw() {
@@ -138,58 +202,40 @@ void draw() {
   }
   float loopT = frameCount / 100f;
   t = loopT + cos(loopT * PI) * 1; // cos(loopT * PI / 2) * 3;
-  bodies.beginDraw();
-  bodies.image(kinect.getBodyTrackImage(), 0, 0);
-  bodies.filter(kinectToSourceDrawer);
-  bodies.filter(erode);
-  bodies.filter(dilate);
-  bodies.endDraw();
 
-  background(config.bg);
-
-  source.beginDraw();
-  source.background(0);
-  source.imageMode(CENTER);
-  source.image(bodies, source.width/2, source.height/2, source.width, source.height);
-  source.filter(edgeHighlighter);
-  source.endDraw();
-  image(source, 0, 0, width, height);
-
-  sdfSolver.set("source", source);
-  sdfSolver.set("time", millis() / 1000f);
-  sdf.beginDraw();
-  for (int i = 0; i < 40; i++) {
-    sdfSolver.set("diags", i % 2 == 0);
-    sdf.filter(sdfSolver);
-    sdf.filter(blur);
+  if (movie != null) {
+    movie.read();
   }
-  sdf.endDraw();
-  //image(sdf, 0, 0);
-
-  //background(0);
-  //fill(0, 25);
-  //rect(0, 0, width, height);
-
-  beginShape(LINES);
-  sdf.loadPixels();
-  for (Runner r : runners) {
-    r.run(sdf);
-  }
-  endShape();
-
-  fx.render()
-    .bloom(0.5, 20, 30)
-    .compose();
-  post.set("time", millis() / 1000f);
-  post.set("background", (float)red(config.bg) / 255., (float)green(config.bg) / 255., (float)blue(config.bg) / 255.);
-  filter(post);
-
+  config.draw();
   //fill(255);
   //textAlign(LEFT, TOP);
   //text(frameCount, 0, 0);
 
-  //println(frameRate);
+  println(frameRate);
   //videoExport.saveFrame();
+}
+
+void defaultDraw(boolean drawSilhouette) {
+  calcBodiesTexture();
+  background(config.bg);
+
+  calcSourceTexture();
+  if (drawSilhouette) {
+    image(source, 0, 0, width, height);
+  }
+
+  calcSdfTexture(40);
+  //image(sdf, 0, 0, width, height);
+
+  updateRunners();
+
+  fx.render()
+    .bloom(0.5, 20, 30)
+    .compose();
+  
+  post.set("time", millis() / 1000f);
+  post.set("background", (float)red(config.bg) / 255., (float)green(config.bg) / 255., (float)blue(config.bg) / 255.);
+  filter(post);
 }
 
 void exit() {
