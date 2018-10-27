@@ -10,17 +10,7 @@ Config c26 = new Config(color(2, 1, 3)) {
 
   void update(Runner r, PImage source) {
     float x = r.x, y = r.y;
-    Runner closest = null;
-    for ( Runner r2 : runners ) {
-      if (r2 == r) continue;
-      if (closest == null) {
-        closest = r2;
-        continue;
-      }
-      if ( dist(r.x, r.y, closest.x, closest.y) > dist(r.x, r.y, r2.x, r2.y) ) {
-        closest = r2;
-      }
-    }
+    Runner closest = closest(r);
     v.set(closest.x - r.x, closest.y - r.y);
     float rad = v.mag();
 

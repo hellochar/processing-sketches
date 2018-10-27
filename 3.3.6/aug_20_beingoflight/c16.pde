@@ -3,7 +3,7 @@ Config c16 = new Config(color(0)) {
     runners.clear();
     for (int i = 0; i < 1000; i++) {
       float angle = i * TWO_PI / 1000;
-      runners.add(new Runner(width/2 + cos(angle) * 350, height/2 + sin(angle) * 350, -cos(angle), -sin(angle)));
+      runners.add(new Runner(width/2 + cos(angle) * 300, height/2 + sin(angle) * 300, -cos(angle), -sin(angle)));
     }
     sdfSolver.set("falloff", 1.0);
 

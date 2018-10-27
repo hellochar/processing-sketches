@@ -39,16 +39,16 @@ Config c25 = new Config(color(16, 18, 23)) {
       y += r.vy;
       boolean reset = false;
       if (x < 0 || x >= width) {
-        x = ((x%width)+width)%width;
+        y = 0;
+        x = r.x0;
+        r.vx = r.vy = 0;
         reset = true;
       }
       if (y < 0 || y >= height) {
         y = 0;
         x = r.x0;
-        r.vx = 0;
-        r.vy = 0;
+        r.vx = r.vy = 0;
         reset = true;
-        //y = ((y%height)+height)%height;
       }
       stroke(color(45, 65, 120));
       if (!reset) {

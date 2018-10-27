@@ -9,6 +9,8 @@ uniform float time;
 uniform sampler2D texture;
 uniform vec2 texOffset;
 uniform vec3 background;
+// 1 is normal, 0.8 is a bit of zoom, 0.5 is a *ton* of zoom
+uniform float chromaticZoom;
 
 varying vec4 vertColor;
 varying vec4 vertTexCoord;
@@ -80,7 +82,7 @@ vec3 chromaticAbberation() {
     const int num_iter = 4;
     const float reci_num_iter_f = 1.0 / float(num_iter);
 
-    vec2 uv=(vertTexCoord.xy*.8)+.10;
+    vec2 uv=(vertTexCoord.xy*chromaticZoom)+(1.0 - chromaticZoom) * 0.5;
     /* vec2 uv = vertTexCoord.xy; */
 
     vec4 sumcol = vec4(0.0);

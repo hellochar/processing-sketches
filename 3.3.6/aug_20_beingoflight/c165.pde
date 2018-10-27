@@ -49,10 +49,8 @@ Config c165 = new Config(color(4, 3, 2)) {
       vertex(x, y);
       x += dx;
       y += dy;
-      int rx = round(x);
-      int ry = round(y);
       vertex(x, y);
-      if (rx < 0 || rx >= width || ry < 0 || ry >= height || dist(0, 0, dx, dy) < 3) {
+      if (x < 0 || x >= width || y < 0 || y >= height) {
         x = x0;
         y = y0;
       }

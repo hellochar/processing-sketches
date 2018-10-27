@@ -1,11 +1,17 @@
 import processing.video.*;
 
+import processing.sound.*;
+
 import KinectPV2.*;
 import java.util.*;
 import com.hamoid.*;
 import ch.bildspur.postfx.builder.*;
 import ch.bildspur.postfx.pass.*;
 import ch.bildspur.postfx.*;
+
+Amplitude ampNode;
+AudioIn input;
+float amplitude;
 
 PVector v = new PVector();
 PVector v2 = new PVector();
@@ -39,6 +45,8 @@ PShader blur;
 
 PostFX fx;
 PShader post;
+
+PShader invert;
 
 PVector pos;
 
@@ -91,18 +99,22 @@ void setup() {
   size(1280, 800, P2D);
   //pixelDensity(1);
   textureWrap(REPEAT);
+  input = new AudioIn(this, 0);
+  input.start();
+  ampNode = new Amplitude(this);
+  ampNode.input(input);
 
-  configs = new Config[] { c16, c165, c17, c20, c22, c23, c24, c25, c26, cg1 };
+  configs = new Config[] { c16, c165, c17, c20, c22, c23, c24, c25, c26, c27, c28, cg1 };
 
   //kinect = new KinectPV2(this);
   //kinect.enableDepthMaskImg(true);
   //kinect.init();
-  
+
   if (kinect == null) {
     movie = new Movie(this, "depthMask.mp4");
     movie.loop();
   }
-  
+
   bodies = createGraphics(KinectPV2.WIDTHDepth, KinectPV2.HEIGHTDepth, P2D);
   kinectToSourceDrawer = loadShader("kinectToSourceDrawer.glsl");
   erode = loadShader("erode.glsl");
@@ -124,8 +136,11 @@ void setup() {
 
   fx = new PostFX(this);
   post = loadShader("post.glsl");
+  
+  invert = loadShader("invert.glsl");
 
   pos = new PVector(width/2, height/2);
+  pushStyle();
   setConfig(0);
   frameRate(30);
   noCursor();
@@ -136,6 +151,8 @@ Config[] configs;
 int cIndex = 0;
 
 void setConfig(int configIndex) {
+  popStyle();
+  pushStyle();
   cIndex = configIndex;
   timeSwitched = millis();
   config = configs[cIndex];
@@ -196,8 +213,12 @@ void updateRunners() {
   endShape();
 }
 
+float CONFIG_DURATION = 35 * 1000;
+
 void draw() {
-  if( millis() - timeSwitched > 35 * 1000 ) {
+  amplitude = amplitude * 0.25 + ampNode.analyze() * 0.75;
+  float currentDuration = millis() - timeSwitched;
+  if ( currentDuration > CONFIG_DURATION ) {
     setConfig((cIndex + 1) % configs.length);
   }
   float loopT = frameCount / 100f;
@@ -206,6 +227,7 @@ void draw() {
   if (movie != null) {
     movie.read();
   }
+  post.set("chromaticZoom", map(amplitude, 0, 0.5, 0.8, 0.5));
   config.draw();
   //fill(255);
   //textAlign(LEFT, TOP);
@@ -213,6 +235,15 @@ void draw() {
 
   println(frameRate);
   //videoExport.saveFrame();
+
+  noStroke();
+  fill(17, 191, 180);
+  rect(0, 0, map(currentDuration / CONFIG_DURATION, 0, 1, 0, width), 5);
+
+  textAlign(LEFT, TOP);
+  fill(255);
+  stroke(0);
+  text("Experiment " + (cIndex + 1) + " / " + configs.length, 0, 0);
 }
 
 void defaultDraw(boolean drawSilhouette) {
@@ -232,7 +263,7 @@ void defaultDraw(boolean drawSilhouette) {
   fx.render()
     .bloom(0.5, 20, 30)
     .compose();
-  
+
   post.set("time", millis() / 1000f);
   post.set("background", (float)red(config.bg) / 255., (float)green(config.bg) / 255., (float)blue(config.bg) / 255.);
   filter(post);
@@ -241,4 +272,19 @@ void defaultDraw(boolean drawSilhouette) {
 void exit() {
   //videoExport.endMovie();
   super.exit();
+}
+
+Runner closest(Runner r) {
+  Runner closest = null;
+  for ( Runner r2 : runners ) {
+    if (r2 == r) continue;
+    if (closest == null) {
+      closest = r2;
+      continue;
+    }
+    if ( dist(r.x, r.y, closest.x, closest.y) > dist(r.x, r.y, r2.x, r2.y) ) {
+      closest = r2;
+    }
+  }
+  return closest;
 }
