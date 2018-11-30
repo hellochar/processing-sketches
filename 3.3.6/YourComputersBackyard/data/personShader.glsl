@@ -41,6 +41,7 @@ void main(void) {
 
   vec4 sum = (8.0 * col4 - (col0 + col1 + col2 + col3 + col5 + col6 + col7 + col8)) * 4.;
 
-  vec3 colorGround = pow(mix(darkgray, darkblue, clamp(1. - pow(vertTexCoord.t / 0.25, 2.), 0., 1.)), vec3(2.2));
-  gl_FragColor = vec4(sum.rgb, 1.0) * vertColor + vec4(colorGround, 1.);
+  /* vec3 colorGround = pow(mix(darkgray, darkblue, clamp(1. - pow(vertTexCoord.t / 0.25, 2.), 0., 1.)), vec3(2.2)); */
+  vec3 colorGround = vec3(0.0);
+  gl_FragColor = (vec4(sum.rgb, 1.0) * vertColor + vec4(colorGround, 1.));
 }

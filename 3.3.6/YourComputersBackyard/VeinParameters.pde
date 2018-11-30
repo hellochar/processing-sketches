@@ -16,7 +16,7 @@ float EXPAND_DIST = TOO_CLOSE_DIST * EXPAND_SCALAR;
  * Linear scalar of how big the plant grows; good numbers are 100 to 1000.
  * For high fidelity, pump this up to like 5000
  */
-float MAX_PATH_COST = 100;
+float MAX_PATH_COST = 150;
 /* sideways_cost_ratio
  * Powerful number that controls how fat the leaf grows.
  * -1 = obovate, truncate, obcordate

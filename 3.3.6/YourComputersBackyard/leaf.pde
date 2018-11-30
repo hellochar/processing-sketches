@@ -81,13 +81,16 @@ class Leaf {
     // computes whole subtree
     root.computeWeight();
     // color startColor = #397a4c;
-    // color startColor = #000000;
-    color startColor = #ffffff;
-    // color green = #89da59;
+    //color startColor = #000000;
+    //color startColor = #ffffff;
+    //color startColor = #21851b;
     for (Vein s : world) {
-      strokeWeight(2 * log(1 + s.weight) / 4);
-      // stroke(lerpColor(startColor, green, s.costToRoot / MAX_PATH_COST), 128);
-      stroke(startColor, 128);
+      if (s.depth < 2) {
+        continue;
+      }
+      strokeWeight(1 * log(1 + s.weight) / 7);
+      stroke(lerpColor(branchStartColor, branchEndColor, s.costToRoot / MAX_PATH_COST), 128);
+      //stroke(startColor, 128);
       //stroke(green, 128);
       s.draw();
 
@@ -109,7 +112,7 @@ class Leaf {
     for (Vein s : terminalNodes) {
       if (s.reason == ReasonStopped.Expensive) {
         strokeWeight(1.3);
-        stroke(#f0810f, 128);
+        stroke(leafColor, 128);
         s.draw();
       }
     }

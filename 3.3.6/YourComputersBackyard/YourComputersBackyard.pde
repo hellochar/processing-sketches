@@ -1,5 +1,12 @@
+import processing.video.*;
+
 import java.util.*;
 import KinectPV2.*;
+
+color branchStartColor = #2B6A26;
+color branchEndColor = #A7FAA2;
+
+color leafColor = #EA351C;
 
 KinectPV2 kinect;
 
@@ -14,25 +21,32 @@ PShader post;
 
 PImage depthImage;
 
+Movie movie;
+
 void setup() {
-  //  fullScreen();
+  fullScreen(P2D);
   //size(2400, 1350, P2D);
-  size(1920, 1080, P2D);
+  //size(1920, 1080, P2D);
   //pixelDensity(1);
-  smooth(3);
+  //smooth(3);
+  noCursor();
   strokeCap(ROUND);
   strokeJoin(ROUND);
   
-  kinect = new KinectPV2(this);
-  kinect.enableBodyTrackImg(true);
-  kinect.enableDepthMaskImg(true);
-  kinect.init();
+  //kinect = new KinectPV2(this);
+  //kinect.enableBodyTrackImg(true);
+  //kinect.enableDepthMaskImg(true);
+  //kinect.init();
 
   noiseSeed(0);
   useLeafMatrix();
   initLeafSingle();
   personShader = loadShader("personShader.glsl");
   post = loadShader("post.glsl");
+  
+  movie = new Movie(this, "depthMask.mp4");
+  movie.loop();
+  //movie.speed(0.5);
 }
 
 void initLeafSingle() {
@@ -42,8 +56,15 @@ void initLeafSingle() {
 float wait = 0;
 
 void draw() {
-  background(0);
-  depthImage = kinect.getBodyTrackImage();
+  //background(255);
+  if (movie != null) {
+    movie.read();
+    depthImage = movie;
+  } else if (kinect != null) {
+    depthImage = kinect.getBodyTrackImage();
+  } else {
+    throw new Error("bad");
+  }
   image(depthImage, 0, 0, width, height);
   filter(personShader);
   useLeafMatrix();
@@ -59,7 +80,7 @@ void draw() {
     }
   }
   //for(int i = 0; i < 2; i++) {
-  if (frameCount % 4 == 0) {
+  if (frameCount % 2 == 0) {
     leaf.expandBoundary();
   }
   //}
