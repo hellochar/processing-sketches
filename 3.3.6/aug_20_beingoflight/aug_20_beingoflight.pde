@@ -79,6 +79,7 @@ class Runner {
   float x, y;
   float x0, y0;
   float vx, vy;
+  int i = 0;
   Runner(float x, float y, float vx, float vy) {
     this.x = x;
     this.y = y;
@@ -96,7 +97,8 @@ class Runner {
 Movie movie;
 
 void setup() {
-  size(1280, 800, P2D);
+  //size(1280, 720, P2D);
+  fullScreen(P2D);
   //pixelDensity(1);
   textureWrap(REPEAT);
   input = new AudioIn(this, 0);
@@ -106,9 +108,9 @@ void setup() {
 
   configs = new Config[] { c16, c165, c17, c20, c22, c23, c24, c25, c26, c27, c28, cg1 };
 
-  //kinect = new KinectPV2(this);
-  //kinect.enableDepthMaskImg(true);
-  //kinect.init();
+  kinect = new KinectPV2(this);
+  kinect.enableDepthMaskImg(true);
+  kinect.init();
 
   if (kinect == null) {
     movie = new Movie(this, "depthMask.mp4");
@@ -213,7 +215,7 @@ void updateRunners() {
   endShape();
 }
 
-float CONFIG_DURATION = 35 * 1000;
+float CONFIG_DURATION = 25 * 1000;
 
 void draw() {
   amplitude = amplitude * 0.25 + ampNode.analyze() * 0.75;

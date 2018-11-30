@@ -3,7 +3,9 @@ Config c23 = new Config(color(6, 5, 2)) {
   void init() {
     runners.clear();
     for (int i = 0; i < 5000; i++) {
-      runners.add(new Runner(random(width), random(height), 0, 0));
+      Runner r = new Runner(random(width), random(height), 0, 0);
+      runners.add(r);
+      r.i = i;
     }
     sdfSolver.set("falloff", 1.0);
   }
@@ -29,7 +31,7 @@ Config c23 = new Config(color(6, 5, 2)) {
         (h2(x + 1, y, source) - h2(x - 1, y, source)) / 2. * 10, 
         (h2(x, y + 1, source) - h2(x, y - 1, source)) / 2. * 10
         );
-      v2.rotate(PI / 2);
+      v2.rotate(PI / 2 + (r.i % 2 == 1 ? 0 : PI));
       dx += v2.x * 555;
       dy += v2.y * 555;
 

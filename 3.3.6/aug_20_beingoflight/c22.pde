@@ -1,17 +1,17 @@
 Config c22 = new Config(color(1, 3, 2)) {
   void init() {
     runners.clear();
-    for (int i = 0; i < 2000; i++) {
+    for (int i = 0; i < 4000; i++) {
       runners.add(new Runner(random(width), random(height), 0, 0));
     }
-    sdfSolver.set("falloff", 2.0);
+    sdfSolver.set("falloff", 5.0);
 
   }
 
   void update(Runner r, PImage source) {
     r.x = r.x0;
     r.y = r.y0;
-    for (int i = 0; i < 10; i++) {
+    for (int i = 0; i < 5; i++) {
       float x = r.x, y = r.y, vx = r.vx, vy = r.vy, x0 = r.x0, y0 = r.y0;
       float bodyValue = h2(x, y, source);
       float dx = 0, dy = 0;
