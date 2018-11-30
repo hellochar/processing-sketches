@@ -43,19 +43,23 @@ KinectPV2 kinect;
 Movie movie;
 
 void setup() {
-  size(1280, 800, P2D);
+  //size(1280, 800, P2D);
+  fullScreen(P2D);
   textureWrap(REPEAT);
   //pixelDensity(1);
   //kinect = new KinectPV2(this);
   //kinect.enableDepthMaskImg(true);
   //kinect.init();
+  
   bodies = createGraphics(KinectPV2.WIDTHDepth, KinectPV2.HEIGHTDepth, P2D);
   kinectToSourceDrawer = loadShader("kinectToSourceDrawer.glsl");
   erode = loadShader("erode.glsl");
   dilate = loadShader("dilate.glsl");
   
-  movie = new Movie(this, "depthMask.mp4");
-  movie.loop();
+  if (kinect == null) {
+    movie = new Movie(this, "depthMask.mp4");
+    movie.loop();
+  }
   //movie.speed(0.5);
 
   source = createGraphics(width/2, height/2, P2D);
@@ -138,7 +142,7 @@ void draw() {
   );
   //warpShader.set("u_mouse", 0.75, 0.8);
   warpShader.set("u_time", millis() / 1000f);
-  filter(warpShader);
+  filter(warpShader);  
 
   post.set("time", millis() / 1000f);
   post.set("background", 2 / 255., 4 / 255., 5 / 255.);
