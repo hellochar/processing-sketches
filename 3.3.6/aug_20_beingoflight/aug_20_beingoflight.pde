@@ -106,7 +106,8 @@ void setup() {
   ampNode = new Amplitude(this);
   ampNode.input(input);
 
-  configs = new Config[] { c16, c165, c17, c20, c22, c23, c24, c25, c26, c27, c28, cg1 };
+  //configs = new Config[] { c16, c165, c17, c20, c22, c23, c24, c25, c26, c27, c28, cg1 };
+  configs = new Config[] { c20 };
 
   kinect = new KinectPV2(this);
   kinect.enableDepthMaskImg(true);
@@ -219,10 +220,10 @@ float CONFIG_DURATION = 25 * 1000;
 
 void draw() {
   amplitude = amplitude * 0.25 + ampNode.analyze() * 0.75;
-  float currentDuration = millis() - timeSwitched;
-  if ( currentDuration > CONFIG_DURATION ) {
-    setConfig((cIndex + 1) % configs.length);
-  }
+  //float currentDuration = millis() - timeSwitched;
+  //if ( currentDuration > CONFIG_DURATION ) {
+  //  setConfig((cIndex + 1) % configs.length);
+  //}
   float loopT = frameCount / 100f;
   t = loopT + cos(loopT * PI) * 1; // cos(loopT * PI / 2) * 3;
 
@@ -238,14 +239,14 @@ void draw() {
   println(frameRate);
   //videoExport.saveFrame();
 
-  noStroke();
-  fill(17, 191, 180);
-  rect(0, 0, map(currentDuration / CONFIG_DURATION, 0, 1, 0, width), 5);
+  //noStroke();
+  //fill(17, 191, 180);
+  //rect(0, 0, map(currentDuration / CONFIG_DURATION, 0, 1, 0, width), 5);
 
-  textAlign(LEFT, TOP);
-  fill(255);
-  stroke(0);
-  text("Experiment " + (cIndex + 1) + " / " + configs.length, 0, 0);
+  //textAlign(LEFT, TOP);
+  //fill(255);
+  //stroke(0);
+  //text("Experiment " + (cIndex + 1) + " / " + configs.length, 0, 0);
 }
 
 void defaultDraw(boolean drawSilhouette) {
